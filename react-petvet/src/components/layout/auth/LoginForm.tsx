@@ -9,11 +9,11 @@ export function LoginForm() {
     <div className="flex min-h-screen">
       {/* Left column — hero image */}
       <div className="relative hidden w-1/2 overflow-hidden lg:block">
-         <img
-  src={catHero}
-  alt=""
-  className="absolute inset-0 h-full w-full scale-110 object-cover object-[30%_20%]"
-/>
+        <img
+          src={catHero}
+          alt=""
+          className="absolute inset-0 h-full w-full scale-110 object-cover object-[30%_20%]"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-slate-900/60" />
 
         <div className="relative flex h-full flex-col justify-between p-10">
@@ -39,10 +39,14 @@ export function LoginForm() {
       </div>
 
       {/* Right column — login form */}
-      <div className="flex w-full items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 p-4 lg:w-1/2">
-        <div className="w-full max-w-sm space-y-6">
+      <div className="relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 p-4 lg:w-1/2">
+        {/* Decorative blurred blobs */}
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-teal-200/40 blur-3xl" />
+        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl" />
+
+        {/* Frosted glass card */}
+        <div className="relative w-full max-w-sm space-y-6 rounded-3xl border border-white/60 bg-white/50 p-8 shadow-xl backdrop-blur-xl">
           <div className="space-y-2">
-            <span className="text-2xl"></span>
             <h1 className="!text-slate-900 text-3xl font-extrabold tracking-tight">
               Welcome back!
             </h1>
