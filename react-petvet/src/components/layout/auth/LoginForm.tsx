@@ -2,17 +2,18 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, PawPrint } from "lucide-react"
+import catHero from "@/assets/CatDog.jpg"
 
 export function LoginForm() {
   return (
     <div className="flex min-h-screen">
       {/* Left column — hero image */}
       <div className="relative hidden w-1/2 overflow-hidden lg:block">
-        <img
-          src="/src/assets/hero-cat.jpg"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+         <img
+  src={catHero}
+  alt=""
+  className="absolute inset-0 h-full w-full scale-110 object-cover object-[30%_20%]"
+/>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-slate-900/60" />
 
         <div className="relative flex h-full flex-col justify-between p-10">
@@ -41,7 +42,7 @@ export function LoginForm() {
       <div className="flex w-full items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 p-4 lg:w-1/2">
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-2">
-            <span className="text-2xl">👋</span>
+            <span className="text-2xl"></span>
             <h1 className="!text-slate-900 text-3xl font-extrabold tracking-tight">
               Welcome back!
             </h1>
