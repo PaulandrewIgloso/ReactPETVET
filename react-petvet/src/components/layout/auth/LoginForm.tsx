@@ -16,14 +16,7 @@ export function LoginForm() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-slate-900/60" />
 
-        <div className="relative flex h-full flex-col justify-between p-10">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-green-500">
-              <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
-            </div>
-            <span className="text-lg font-bold text-white">PetVet MR</span>
-          </div>
-
+        <div className="relative flex h-full flex-col justify-end p-10">
           <div className="max-w-md space-y-4">
             <h2 className="text-4xl font-bold leading-tight text-white">
               Every pet deserves the{" "}
@@ -46,6 +39,14 @@ export function LoginForm() {
 
         {/* Frosted glass card */}
         <div className="relative w-full max-w-sm space-y-6 rounded-3xl border border-white/60 bg-white/50 p-8 shadow-xl backdrop-blur-xl">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-green-500">
+              <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
+            </div>
+            <span className="text-lg font-bold text-slate-900">PetVet MR</span>
+          </div>
+
           <div className="space-y-2">
             <h1 className="!text-slate-900 text-3xl font-extrabold tracking-tight">
               Welcome back!
