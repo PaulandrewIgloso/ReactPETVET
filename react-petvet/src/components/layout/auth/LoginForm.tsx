@@ -52,7 +52,7 @@ export function LoginForm() {
         password,
       })
       // Registration succeeded — drop them back into the login fields, pre-filled.
-      switchMode("login")
+      switchMode("login") 
     } catch {
       setError("Could not create account. That email may already be registered.")
     } finally {
@@ -65,9 +65,7 @@ export function LoginForm() {
       {/* Left column — hero image */}
       <div className="relative hidden w-1/2 overflow-hidden lg:block">
         <img
-          src={catHero}
-          alt=""
-          className="absolute inset-0 h-full w-full scale-110 object-cover object-[30%_20%]"
+          src={catHero} alt=""className="absolute inset-0 h-full w-full scale-110 object-cover object-[30%_20%]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-slate-900/60" />
 
