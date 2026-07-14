@@ -42,6 +42,34 @@ The content is organized as follows:
 <directory_structure>
 .gitignore
 components.json
+dist-ts/src/App.d.ts
+dist-ts/src/App.js
+dist-ts/src/components/layout/Appshell.d.ts
+dist-ts/src/components/layout/Appshell.js
+dist-ts/src/components/layout/auth/LoginForm.d.ts
+dist-ts/src/components/layout/auth/LoginForm.js
+dist-ts/src/components/layout/Sidebar.d.ts
+dist-ts/src/components/layout/Sidebar.js
+dist-ts/src/components/shared/logo.d.ts
+dist-ts/src/components/shared/logo.js
+dist-ts/src/components/ui/alert.d.ts
+dist-ts/src/components/ui/alert.js
+dist-ts/src/components/ui/button.d.ts
+dist-ts/src/components/ui/button.js
+dist-ts/src/components/ui/card.d.ts
+dist-ts/src/components/ui/card.js
+dist-ts/src/components/ui/input.d.ts
+dist-ts/src/components/ui/input.js
+dist-ts/src/components/ui/label.d.ts
+dist-ts/src/components/ui/label.js
+dist-ts/src/features/dashboard/Dashboardpage.d.ts
+dist-ts/src/features/dashboard/Dashboardpage.js
+dist-ts/src/lib/utils.d.ts
+dist-ts/src/lib/utils.js
+dist-ts/src/main.d.ts
+dist-ts/src/main.js
+dist-ts/vite.config.d.ts
+dist-ts/vite.config.js
 eslint.config.js
 index.html
 package.json
@@ -50,22 +78,36 @@ public/icons.svg
 README.md
 src/App.css
 src/App.tsx
-src/assets/hero.png
-src/assets/react.svg
+src/assets/CatDog.jpg
 src/assets/vite.svg
+src/components/layout/Appshell.tsx
+src/components/layout/auth/LoginForm.tsx
+src/components/layout/Sidebar.tsx
+src/components/shared/logo.d.ts
+src/components/shared/logo.js
 src/components/shared/logo.tsx
 src/components/ui/alert.tsx
 src/components/ui/button.tsx
 src/components/ui/card.tsx
 src/components/ui/input.tsx
 src/components/ui/label.tsx
+src/features/appointments/Appointmentspage.tsx
+src/features/dashboard/Dashboardpage.tsx
+src/features/documents/Documentspage.tsx
+src/features/pets/PetProfilespage.tsx
+src/features/records/MedicalRecordspage.tsx
+src/features/users/UserAccountspage.tsx
+src/features/vaccinations/Vaccinationspage.tsx
 src/index.css
-src/lib/auth/LoginForm.tsx
 src/lib/utils.ts
 src/main.tsx
+src/services/api.ts
+src/services/auth.tsx
 tsconfig.app.json
 tsconfig.json
 tsconfig.node.json
+vite.config.d.ts
+vite.config.js
 vite.config.ts
 </directory_structure>
 
@@ -101,36 +143,372 @@ dist-ssr
 
 <file path="components.json">
 {
-  "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "es2023",
-    "lib": ["ES2023", "DOM"],
-    "module": "esnext",
-    "types": ["vite/client"],
-    "allowArbitraryExtensions": true,
-    "skipLibCheck": true,
-
-
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/App.css",
+    "baseColor": "slate",
+    "cssVariables": true,
+    "prefix": ""
   },
-  "include": ["src"]
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "iconLibrary": "lucide"
 }
+</file>
+
+<file path="dist-ts/src/App.d.ts">
+import './App.css';
+declare function App(): import("react").JSX.Element;
+export default App;
+</file>
+
+<file path="dist-ts/src/App.js">
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { LoginForm } from './components/layout/auth/LoginForm';
+import DashboardPage from './features/dashboard/Dashboardpage';
+import './App.css';
+function App() {
+    return (_jsx(BrowserRouter, { children: _jsxs(Routes, { children: [_jsx(Route, { path: "/login", element: _jsx(LoginForm, {}) }), _jsx(Route, { path: "/dashboard", element: _jsx(DashboardPage, {}) }), _jsx(Route, { path: "/", element: _jsx(DashboardPage, {}) })] }) }));
+}
+export default App;
+</file>
+
+<file path="dist-ts/src/components/layout/Appshell.d.ts">
+import type { ReactNode } from "react";
+interface AppShellProps {
+    children: ReactNode;
+}
+export declare function AppShell({ children }: AppShellProps): import("react").JSX.Element;
+export {};
+</file>
+
+<file path="dist-ts/src/components/layout/Appshell.js">
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Sidebar } from "./Sidebar";
+export function AppShell({ children }) {
+    return (_jsxs("div", { className: "flex min-h-screen bg-slate-50", children: [_jsx(Sidebar, {}), _jsx("div", { className: "flex-1 overflow-y-auto", children: children })] }));
+}
+</file>
+
+<file path="dist-ts/src/components/layout/auth/LoginForm.d.ts">
+export declare function LoginForm(): import("react").JSX.Element;
+</file>
+
+<file path="dist-ts/src/components/layout/auth/LoginForm.js">
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, PawPrint } from "lucide-react";
+import catHero from "@/assets/CatDog.jpg";
+import { useNavigate } from "react-router-dom";
+export function LoginForm() {
+    const navigate = useNavigate();
+    const handleSignIn = (e) => {
+        e.preventDefault();
+        navigate("/dashboard");
+    };
+    return (_jsxs("div", { className: "flex min-h-screen", children: [_jsxs("div", { className: "relative hidden w-1/2 overflow-hidden lg:block", children: [_jsx("img", { src: catHero, alt: "", className: "absolute inset-0 h-full w-full scale-110 object-cover object-[30%_20%]" }), _jsx("div", { className: "absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-slate-900/60" }), _jsx("div", { className: "relative flex h-full flex-col justify-end p-10", children: _jsxs("div", { className: "max-w-md space-y-4", children: [_jsxs("h2", { className: "text-4xl font-bold leading-tight text-white", children: ["Every pet deserves the", " ", _jsx("span", { className: "bg-gradient-to-r from-teal-400 to-green-400 bg-clip-text text-transparent", children: "best care." })] }), _jsx("p", { className: "text-slate-200", children: "Centralized clinical records for your clinic \u2014 fast, secure, and built around your patients." })] }) })] }), _jsxs("div", { className: "relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 p-4 lg:w-1/2", children: [_jsx("div", { className: "absolute -top-24 -right-24 h-96 w-96 rounded-full bg-teal-200/40 blur-3xl" }), _jsx("div", { className: "absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl" }), _jsxs("div", { className: "relative w-full max-w-sm space-y-6 rounded-3xl border border-white/60 bg-white/50 p-8 shadow-xl backdrop-blur-xl", children: [_jsxs("div", { className: "flex items-center gap-2", children: [_jsx("div", { className: "flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-green-500", children: _jsx(PawPrint, { className: "h-5 w-5 text-white", strokeWidth: 2.5 }) }), _jsx("span", { className: "text-lg font-bold text-slate-900", children: "PetVet MR" })] }), _jsxs("div", { className: "space-y-2", children: [_jsx("h1", { className: "!text-slate-900 text-3xl font-extrabold tracking-tight", children: "Welcome!" }), _jsx("p", { className: "text-sm text-slate-500", children: "Sign in to manage your clinic or view your pet's records." })] }), _jsxs("form", { className: "space-y-5", onSubmit: handleSignIn, children: [_jsxs("div", { className: "space-y-2", children: [_jsx(Label, { htmlFor: "email", className: "text-xs font-semibold uppercase tracking-wide text-slate-500", children: "Email" }), _jsx(Input, { id: "email", type: "email", placeholder: "username", className: "h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40" })] }), _jsxs("div", { className: "space-y-2", children: [_jsx(Label, { htmlFor: "password", className: "text-xs font-semibold uppercase tracking-wide text-slate-500", children: "Password" }), _jsx(Input, { id: "password", type: "password", placeholder: "******", className: "h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40" })] }), _jsx(Button, { type: "submit", className: "h-14 w-full rounded-2xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 text-base font-semibold text-white shadow-md hover:opacity-90", children: _jsxs("span", { className: "flex items-center justify-center gap-2", children: ["Sign in ", _jsx(ArrowRight, { className: "h-4 w-4" })] }) })] })] })] })] }));
+}
+</file>
+
+<file path="dist-ts/src/components/layout/Sidebar.d.ts">
+export declare function Sidebar(): import("react").JSX.Element;
+</file>
+
+<file path="dist-ts/src/components/layout/Sidebar.js">
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Link, useLocation } from "react-router-dom";
+import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut, } from "lucide-react";
+const navItems = [
+    { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { label: "Pet Profiles", icon: PawPrint, href: "/pets" },
+    { label: "Medical Records", icon: FileText, href: "/records" },
+    { label: "Vaccinations", icon: Syringe, href: "/vaccinations" },
+    { label: "Documents", icon: FileStack, href: "/documents" },
+    { label: "Appointments", icon: Calendar, href: "/appointments" },
+    { label: "User Accounts", icon: Users, href: "/users" },
+];
+export function Sidebar() {
+    const location = useLocation();
+    return (_jsxs("aside", { className: "flex h-screen w-64 flex-col bg-slate-950 text-slate-300", children: [_jsxs("div", { className: "flex items-center gap-2 border-b border-white/10 px-5 py-5", children: [_jsx("div", { className: "flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-green-500", children: _jsx(PawPrint, { className: "h-5 w-5 text-white", strokeWidth: 2.5 }) }), _jsxs("div", { className: "leading-tight", children: [_jsx("div", { className: "text-sm font-bold text-white", children: "PetVet MR" }), _jsx("div", { className: "text-xs text-teal-400", children: "Clinic Portal" })] })] }), _jsx("nav", { className: "flex-1 space-y-1 px-3 py-4", children: navItems.map((item) => {
+                    const isActive = item.href === location.pathname;
+                    const Icon = item.icon;
+                    return (_jsxs(Link, { to: item.href, className: `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive
+                            ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-sm"
+                            : "text-slate-300 hover:bg-white/5 hover:text-white"}`, children: [_jsx(Icon, { className: "h-4 w-4 shrink-0" }), item.label] }, item.href));
+                }) }), _jsxs("div", { className: "border-t border-white/10 p-4", children: [_jsxs("div", { className: "mb-2 flex items-center gap-3", children: [_jsx("div", { className: "flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white", children: "DS" }), _jsxs("div", { className: "leading-tight", children: [_jsx("div", { className: "text-sm font-semibold text-white", children: "Dr. Sarah Reyes" }), _jsxs("div", { className: "flex items-center gap-1 text-xs text-emerald-400", children: [_jsx("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-400" }), "Administrator"] })] })] }), _jsxs("button", { className: "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white", children: [_jsx(LogOut, { className: "h-4 w-4" }), "Sign out"] })] })] }));
+}
+</file>
+
+<file path="dist-ts/src/components/shared/logo.d.ts">
+interface LogoProps {
+    className?: string;
+}
+export declare function Logo({ className }: LogoProps): import("react").JSX.Element;
+export {};
+</file>
+
+<file path="dist-ts/src/components/shared/logo.js">
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { PawPrint } from "lucide-react";
+export function Logo({ className }) {
+    return (_jsxs("div", { className: `flex items-center gap-2 ${className ?? ""}`, children: [_jsx("div", { className: "flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-green-500", children: _jsx(PawPrint, { className: "h-5 w-5 text-white", strokeWidth: 2.5 }) }), _jsxs("span", { className: "text-lg font-bold tracking-tight text-slate-900", children: ["PetVet ", _jsx("span", { className: "text-teal-600", children: "MR" })] })] }));
+}
+</file>
+
+<file path="dist-ts/src/components/ui/alert.d.ts">
+import * as React from "react";
+import { type VariantProps } from "class-variance-authority";
+declare const alertVariants: (props?: ({
+    variant?: "default" | "destructive" | null | undefined;
+} & import("class-variance-authority/types").ClassProp) | undefined) => string;
+declare function Alert({ className, variant, ...props }: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>): React.JSX.Element;
+declare function AlertTitle({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+declare function AlertDescription({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+declare function AlertAction({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+export { Alert, AlertTitle, AlertDescription, AlertAction };
+</file>
+
+<file path="dist-ts/src/components/ui/alert.js">
+import { jsx as _jsx } from "react/jsx-runtime";
+import * as React from "react";
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+const alertVariants = cva("group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4", {
+    variants: {
+        variant: {
+            default: "bg-card text-card-foreground",
+            destructive: "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+        },
+    },
+    defaultVariants: {
+        variant: "default",
+    },
+});
+function Alert({ className, variant, ...props }) {
+    return (_jsx("div", { "data-slot": "alert", role: "alert", className: cn(alertVariants({ variant }), className), ...props }));
+}
+function AlertTitle({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "alert-title", className: cn("font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground", className), ...props }));
+}
+function AlertDescription({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "alert-description", className: cn("text-sm text-balance text-muted-foreground md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4", className), ...props }));
+}
+function AlertAction({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "alert-action", className: cn("absolute top-2 right-2", className), ...props }));
+}
+export { Alert, AlertTitle, AlertDescription, AlertAction };
+</file>
+
+<file path="dist-ts/src/components/ui/button.d.ts">
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { type VariantProps } from "class-variance-authority";
+declare const buttonVariants: (props?: ({
+    variant?: "link" | "default" | "outline" | "secondary" | "ghost" | "destructive" | null | undefined;
+    size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined;
+} & import("class-variance-authority/types").ClassProp) | undefined) => string;
+declare function Button({ className, variant, size, ...props }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>): import("react").JSX.Element;
+export { Button, buttonVariants };
+</file>
+
+<file path="dist-ts/src/components/ui/button.js">
+import { jsx as _jsx } from "react/jsx-runtime";
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+const buttonVariants = cva("group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4", {
+    variants: {
+        variant: {
+            default: "bg-primary text-primary-foreground hover:bg-primary/80",
+            outline: "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+            secondary: "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+            ghost: "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+            destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+            link: "text-primary underline-offset-4 hover:underline",
+        },
+        size: {
+            default: "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+            xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+            sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+            lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+            icon: "size-8",
+            "icon-xs": "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+            "icon-sm": "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+            "icon-lg": "size-9",
+        },
+    },
+    defaultVariants: {
+        variant: "default",
+        size: "default",
+    },
+});
+function Button({ className, variant = "default", size = "default", ...props }) {
+    return (_jsx(ButtonPrimitive, { "data-slot": "button", className: cn(buttonVariants({ variant, size, className })), ...props }));
+}
+export { Button, buttonVariants };
+</file>
+
+<file path="dist-ts/src/components/ui/card.d.ts">
+import * as React from "react";
+declare function Card({ className, size, ...props }: React.ComponentProps<"div"> & {
+    size?: "default" | "sm";
+}): React.JSX.Element;
+declare function CardHeader({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+declare function CardTitle({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+declare function CardDescription({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+declare function CardAction({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+declare function CardContent({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+declare function CardFooter({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element;
+export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent, };
+</file>
+
+<file path="dist-ts/src/components/ui/card.js">
+import { jsx as _jsx } from "react/jsx-runtime";
+import * as React from "react";
+import { cn } from "@/lib/utils";
+function Card({ className, size = "default", ...props }) {
+    return (_jsx("div", { "data-slot": "card", "data-size": size, className: cn("group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl", className), ...props }));
+}
+function CardHeader({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "card-header", className: cn("group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)", className), ...props }));
+}
+function CardTitle({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "card-title", className: cn("font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm", className), ...props }));
+}
+function CardDescription({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "card-description", className: cn("text-sm text-muted-foreground", className), ...props }));
+}
+function CardAction({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "card-action", className: cn("col-start-2 row-span-2 row-start-1 self-start justify-self-end", className), ...props }));
+}
+function CardContent({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "card-content", className: cn("px-(--card-spacing)", className), ...props }));
+}
+function CardFooter({ className, ...props }) {
+    return (_jsx("div", { "data-slot": "card-footer", className: cn("flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)", className), ...props }));
+}
+export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent, };
+</file>
+
+<file path="dist-ts/src/components/ui/input.d.ts">
+import * as React from "react";
+declare function Input({ className, type, ...props }: React.ComponentProps<"input">): React.JSX.Element;
+export { Input };
+</file>
+
+<file path="dist-ts/src/components/ui/input.js">
+import { jsx as _jsx } from "react/jsx-runtime";
+import * as React from "react";
+import { Input as InputPrimitive } from "@base-ui/react/input";
+import { cn } from "@/lib/utils";
+function Input({ className, type, ...props }) {
+    return (_jsx(InputPrimitive, { type: type, "data-slot": "input", className: cn("h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40", className), ...props }));
+}
+export { Input };
+</file>
+
+<file path="dist-ts/src/components/ui/label.d.ts">
+import * as React from "react";
+declare function Label({ className, ...props }: React.ComponentProps<"label">): React.JSX.Element;
+export { Label };
+</file>
+
+<file path="dist-ts/src/components/ui/label.js">
+import { jsx as _jsx } from "react/jsx-runtime";
+import * as React from "react";
+import { cn } from "@/lib/utils";
+function Label({ className, ...props }) {
+    return (_jsx("label", { "data-slot": "label", className: cn("flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50", className), ...props }));
+}
+export { Label };
+</file>
+
+<file path="dist-ts/src/features/dashboard/Dashboardpage.d.ts">
+export default function DashboardPage(): import("react").JSX.Element;
+</file>
+
+<file path="dist-ts/src/features/dashboard/Dashboardpage.js">
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { AppShell } from "@/components/layout/Appshell";
+import { PawPrint, ClipboardList, CalendarDays, Syringe, Bell, } from "lucide-react";
+const stats = [
+    { label: "Total Pets", value: 5, icon: PawPrint, color: "from-sky-500 to-sky-600" },
+    { label: "Records This Month", value: 5, icon: ClipboardList, color: "from-emerald-500 to-emerald-600" },
+    { label: "Upcoming Appts", value: 3, icon: CalendarDays, color: "from-amber-500 to-amber-600" },
+    { label: "Vaccines Due", value: 1, icon: Syringe, color: "from-orange-500 to-red-500" },
+];
+const appointments = [
+    { date: "24\nJun", pet: "Luna", owner: "Carlos Mendez", note: "Dermatitis follow-up", time: "09:30" },
+    { date: "25\nJun", pet: "Titan", owner: "Carlos Mendez", note: "Physiotherapy assessment", time: "14:00" },
+    { date: "08\nJul", pet: "Bella", owner: "Maria Santos", note: "Pre-surgical exam (spay)", time: "10:00" },
+];
+const recentPatients = [
+    { pet: "Luna", type: "Dog · Female", breed: "Labrador Retriever", owner: "Carlos Mendez", lastVisit: "2025-06-10", status: "Active" },
+    { pet: "Mochi", type: "Cat · Male", breed: "Scottish Fold", owner: "Ana Torres", lastVisit: "2025-05-18", status: "Active" },
+];
+export default function DashboardPage() {
+    return (_jsxs(AppShell, { children: [_jsxs("div", { className: "flex items-center justify-between border-b bg-white px-8 py-5", children: [_jsxs("div", { children: [_jsx("h1", { className: "text-xl font-bold text-slate-900", children: "Dashboard" }), _jsx("p", { className: "text-sm text-slate-500", children: "Clinic overview \u2014 Friday, July 10, 2026" })] }), _jsxs("button", { className: "relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200", children: [_jsx(Bell, { className: "h-4 w-4 text-slate-600" }), _jsx("span", { className: "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500" })] })] }), _jsxs("div", { className: "space-y-6 p-8", children: [_jsxs("div", { className: "relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8", children: [_jsxs("span", { className: "inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300", children: [_jsx("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-400" }), "Clinic is open \u00B7 Friday, July 10"] }), _jsx("h2", { className: "mt-4 flex items-center gap-2 text-3xl font-bold text-white", children: "Good afternoon!" }), _jsxs("p", { className: "mt-2 text-slate-300", children: ["You have ", _jsx("span", { className: "font-semibold text-white", children: "3 appointments" }), " scheduled today and", " ", _jsx("span", { className: "font-semibold text-white", children: "1 vaccine due" }), "."] })] }), _jsx("div", { className: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4", children: stats.map((stat) => {
+                            const Icon = stat.icon;
+                            return (_jsxs("div", { className: `relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.color} p-5 text-white shadow-sm`, children: [_jsx("div", { className: "mb-6 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20", children: _jsx(Icon, { className: "h-4 w-4" }) }), _jsx("div", { className: "text-3xl font-bold", children: stat.value }), _jsx("div", { className: "text-sm text-white/80", children: stat.label }), _jsx("div", { className: "absolute -bottom-4 -right-4 h-20 w-20 rounded-full bg-white/10" })] }, stat.label));
+                        }) }), _jsxs("div", { className: "grid grid-cols-1 gap-6 lg:grid-cols-2", children: [_jsxs("div", { className: "overflow-hidden rounded-2xl border bg-white", children: [_jsxs("div", { className: "flex items-center justify-between border-b bg-emerald-50/50 px-5 py-3", children: [_jsxs("div", { className: "flex items-center gap-2 font-semibold text-slate-900", children: [_jsx(CalendarDays, { className: "h-4 w-4 text-emerald-600" }), "Upcoming Appointments"] }), _jsx("span", { className: "text-xs text-slate-500", children: appointments.length })] }), _jsx("div", { className: "divide-y", children: appointments.map((a) => (_jsxs("div", { className: "flex items-center justify-between px-5 py-3", children: [_jsxs("div", { className: "flex items-center gap-3", children: [_jsx("div", { className: "whitespace-pre-line rounded-lg bg-slate-100 px-2 py-1 text-center text-xs font-semibold leading-tight text-slate-700", children: a.date }), _jsxs("div", { children: [_jsxs("div", { className: "text-sm font-semibold text-slate-900", children: [a.pet, " \u00B7 ", _jsx("span", { className: "font-normal text-slate-500", children: a.owner })] }), _jsx("div", { className: "text-xs text-slate-500", children: a.note })] })] }), _jsx("span", { className: "rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600", children: a.time })] }, a.pet + a.date))) })] }), _jsxs("div", { className: "overflow-hidden rounded-2xl border bg-white", children: [_jsxs("div", { className: "flex items-center justify-between border-b bg-amber-50/50 px-5 py-3", children: [_jsxs("div", { className: "flex items-center gap-2 font-semibold text-slate-900", children: [_jsx(Syringe, { className: "h-4 w-4 text-amber-600" }), "Vaccination Reminders"] }), _jsx("span", { className: "text-xs font-medium text-amber-600", children: "1 due" })] }), _jsxs("div", { className: "flex items-center justify-between px-5 py-3", children: [_jsxs("div", { className: "flex items-center gap-3", children: [_jsx("div", { className: "h-9 w-9 rounded-full bg-slate-200" }), _jsxs("div", { children: [_jsx("div", { className: "text-sm font-semibold text-slate-900", children: "Luna" }), _jsx("div", { className: "text-xs text-slate-500", children: "Bordetella" })] })] }), _jsx("span", { className: "rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700", children: "Due Soon" })] })] })] }), _jsxs("div", { className: "overflow-hidden rounded-2xl border bg-white", children: [_jsxs("div", { className: "flex items-center justify-between border-b bg-emerald-50/50 px-5 py-3", children: [_jsxs("div", { className: "flex items-center gap-2 font-semibold text-slate-900", children: [_jsx(PawPrint, { className: "h-4 w-4 text-emerald-600" }), "Recent Patients"] }), _jsxs("span", { className: "text-xs text-slate-500", children: [recentPatients.length, " total"] })] }), _jsxs("table", { className: "w-full text-left text-sm", children: [_jsx("thead", { children: _jsxs("tr", { className: "border-b text-xs uppercase tracking-wide text-slate-400", children: [_jsx("th", { className: "px-5 py-3 font-medium", children: "Pet" }), _jsx("th", { className: "px-5 py-3 font-medium", children: "Breed" }), _jsx("th", { className: "px-5 py-3 font-medium", children: "Owner" }), _jsx("th", { className: "px-5 py-3 font-medium", children: "Last Visit" }), _jsx("th", { className: "px-5 py-3 font-medium", children: "Status" })] }) }), _jsx("tbody", { className: "divide-y", children: recentPatients.map((p) => (_jsxs("tr", { children: [_jsxs("td", { className: "flex items-center gap-3 px-5 py-3", children: [_jsx("div", { className: "h-9 w-9 rounded-full bg-slate-200" }), _jsxs("div", { children: [_jsx("div", { className: "font-semibold text-slate-900", children: p.pet }), _jsx("div", { className: "text-xs text-slate-500", children: p.type })] })] }), _jsx("td", { className: "px-5 py-3 text-teal-600", children: p.breed }), _jsx("td", { className: "px-5 py-3 text-slate-700", children: p.owner }), _jsx("td", { className: "px-5 py-3 text-slate-500", children: p.lastVisit }), _jsx("td", { className: "px-5 py-3", children: _jsxs("span", { className: "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700", children: [_jsx("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-500" }), p.status] }) })] }, p.pet))) })] })] })] })] }));
+}
+</file>
+
+<file path="dist-ts/src/lib/utils.d.ts">
+import { type ClassValue } from "clsx";
+export declare function cn(...inputs: ClassValue[]): string;
+</file>
+
+<file path="dist-ts/src/lib/utils.js">
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+export function cn(...inputs) {
+    return twMerge(clsx(inputs));
+}
+</file>
+
+<file path="dist-ts/src/main.d.ts">
+import './index.css';
+</file>
+
+<file path="dist-ts/src/main.js">
+import { jsx as _jsx } from "react/jsx-runtime";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App';
+createRoot(document.getElementById('root')).render(_jsx(StrictMode, { children: _jsx(App, {}) }));
+</file>
+
+<file path="dist-ts/vite.config.d.ts">
+declare const _default: import("vite").UserConfig;
+export default _default;
+</file>
+
+<file path="dist-ts/vite.config.js">
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
+export default defineConfig({
+    plugins: [react(), tailwindcss()],
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './src'),
+        },
+    },
+});
 </file>
 
 <file path="eslint.config.js">
@@ -195,6 +573,7 @@ export default defineConfig([
     "lucide-react": "^1.23.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1",
     "shadcn": "^4.13.0",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.2",
@@ -331,9 +710,16 @@ export default defineConfig([
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
-
 @custom-variant dark (&:is(.dark *));
-
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari, Opera */
+  }
+}
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -645,136 +1031,285 @@ export default defineConfig([
 </file>
 
 <file path="src/App.tsx">
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './services/auth'
+import { LoginForm } from './components/layout/auth/LoginForm'
+import DashboardPage from './features/dashboard/Dashboardpage'
+import PetProfilesPage from './features/pets/PetProfilespage'
+import MedicalRecordsPage from './features/records/MedicalRecordspage'
+import VaccinationsPage from './features/vaccinations/Vaccinationspage'
+import AppointmentsPage from './features/appointments/Appointmentspage'
+import DocumentsPage from './features/documents/Documentspage'
+import UserAccountsPage from './features/users/UserAccountspage'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { token } = useAuth()
+  return token ? <>{children}</> : <Navigate to="/login" replace />
+}
 
+function AppRoutes() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <Routes>
+      <Route path="/login" element={<LoginForm />} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/pets" element={<ProtectedRoute><PetProfilesPage /></ProtectedRoute>} />
+      <Route path="/records" element={<ProtectedRoute><MedicalRecordsPage /></ProtectedRoute>} />
+      <Route path="/vaccinations" element={<ProtectedRoute><VaccinationsPage /></ProtectedRoute>} />
+      <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
+      <Route path="/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
+      <Route path="/users" element={<ProtectedRoute><UserAccountsPage /></ProtectedRoute>} />
+      <Route path="/" element={<LoginForm />} />
+    </Routes>
   )
 }
 
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}
 export default App
-</file>
-
-<file path="src/assets/react.svg">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
 </file>
 
 <file path="src/assets/vite.svg">
 <svg xmlns="http://www.w3.org/2000/svg" width="77" height="47" fill="none" aria-labelledby="vite-logo-title" viewBox="0 0 77 47"><title id="vite-logo-title">Vite</title><style>.parenthesis{fill:#000}@media (prefers-color-scheme:dark){.parenthesis{fill:#fff}}</style><path fill="#9135ff" d="M40.151 45.71c-.663.844-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.493c-.92 0-1.457-1.04-.92-1.788l7.479-10.471c1.07-1.498 0-3.578-1.842-3.578H15.443c-.92 0-1.456-1.04-.92-1.788l9.696-13.576c.213-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.472c-1.07 1.497 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.087.89 1.83L40.153 45.712z"/><mask id="a" width="48" height="47" x="14" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M40.047 45.71c-.663.843-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.389c-.92 0-1.457-1.04-.92-1.788l7.479-10.472c1.07-1.497 0-3.578-1.842-3.578H15.34c-.92 0-1.456-1.04-.92-1.788l9.696-13.575c.213-.297.556-.474.92-.474H53.93c.92 0 1.456 1.04.92 1.788L47.37 13.03c-1.07 1.498 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.088.89 1.831L40.049 45.712z"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#eee6ff" rx="5.508" ry="14.704" transform="rotate(269.814 20.96 11.29)scale(-1 1)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#eee6ff" rx="10.399" ry="29.851" transform="rotate(89.814 -16.902 -8.275)scale(1 -1)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#8900ff" rx="5.508" ry="30.487" transform="rotate(89.814 -19.197 -7.127)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.928 4.177)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.738 5.52)scale(1 -1)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#eee6ff" rx="14.072" ry="22.078" transform="rotate(93.35 31.245 55.578)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx="14.592" cy="9.743" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(39.51 14.592 9.743)"/></g><g filter="url(#k)"><ellipse cx="61.728" cy="-5.321" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 61.728 -5.32)"/></g><g filter="url(#l)"><ellipse cx="55.618" cy="7.104" fill="#00c2ff" rx="5.971" ry="9.665" transform="rotate(37.892 55.618 7.104)"/></g><g filter="url(#m)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#n)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#o)"><ellipse cx="49.857" cy="30.678" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 49.857 30.678)"/></g><g filter="url(#p)"><ellipse cx="52.623" cy="33.171" fill="#00c2ff" rx="5.971" ry="15.297" transform="rotate(37.892 52.623 33.17)"/></g></g><path d="M6.919 0c-9.198 13.166-9.252 33.575 0 46.789h6.215c-9.25-13.214-9.196-33.623 0-46.789zm62.424 0h-6.215c9.198 13.166 9.252 33.575 0 46.789h6.215c9.25-13.214 9.196-33.623 0-46.789" class="parenthesis"/><defs><filter id="b" width="60.045" height="41.654" x="-5.564" y="16.92" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-40.407" y="-6.762" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-35.435" y="2.801" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-30.84" y="20.8" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-29.307" y="21.949" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="29.961" y="-17.13" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-13.43" y="-22.082" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="34.321" y="-37.644" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="38.847" y="-10.552" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="22.45" y="-1.645" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="32.919" y="11.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter></defs></svg>
+</file>
+
+<file path="src/components/layout/Appshell.tsx">
+import type { ReactNode } from "react"
+import { Sidebar } from "./Sidebar"
+
+interface AppShellProps {
+  children: ReactNode
+}
+
+export function AppShell({ children }: AppShellProps) {
+  return (
+    <div className="flex min-h-screen bg-slate-50">
+      <Sidebar />
+      <div className="flex-1 overflow-y-auto">{children}</div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/components/layout/auth/LoginForm.tsx">
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { ArrowRight, PawPrint } from "lucide-react"
+import catHero from "@/assets/CatDog.jpg"
+import { useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
+import type { FormEvent } from "react"
+
+
+export function LoginForm() {
+  const navigate = useNavigate()
+  const handleSignIn = (e: FormEvent) => {
+    e.preventDefault()
+    navigate("/dashboard")
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      {/* Left column — hero image */}
+      <div className="relative hidden w-1/2 overflow-hidden lg:block">
+        <img
+          src={catHero}
+          alt=""
+          className="absolute inset-0 h-full w-full scale-110 object-cover object-[30%_20%]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-slate-900/60" />
+
+        <div className="relative flex h-full flex-col justify-end p-10">
+          <div className="max-w-md space-y-4">
+            <h2 className="text-4xl font-bold leading-tight text-white">
+              Every pet deserves the{" "}
+              <span className="bg-gradient-to-r from-teal-400 to-green-400 bg-clip-text text-transparent">
+                best care.
+              </span>
+            </h2>
+            <p className="text-slate-200">
+              Centralized clinical records for your clinic — fast, secure, and built around your patients.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right column — login form */}
+      <div className="relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 p-4 lg:w-1/2">
+        {/* Decorative blurred blobs */}
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-teal-200/40 blur-3xl" />
+        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl" />
+        {/* Frosted glass card */}
+        <div className="relative w-full max-w-sm space-y-6 rounded-3xl border border-white/60 bg-white/50 p-8 shadow-xl backdrop-blur-xl">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-green-500">
+              <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
+            </div>
+            <span className="text-lg font-bold text-slate-900">PetVet MR</span>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="!text-slate-900 text-3xl font-extrabold tracking-tight">
+              Welcome!
+            </h1>
+            <p className="text-sm text-slate-500">
+              Sign in to manage your clinic or view your pet's records.
+            </p>
+          </div>
+
+          <form className="space-y-5" onSubmit={handleSignIn} >
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+              >
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="username"
+                className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="password"
+                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+              >
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="******"
+                className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="h-14 w-full rounded-2xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 text-base font-semibold text-white shadow-md hover:opacity-90">
+              <span className="flex items-center justify-center gap-2">
+                Sign in <ArrowRight className="h-4 w-4" />
+              </span>
+            </Button>
+          </form>
+
+           <p className="text-center text-sm text-slate-600">
+              Don't have an account?{" "}
+              <Link to="/register" className="font-semibold text-teal-700 hover:underline">
+                Sign up
+              </Link>
+           </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/components/layout/Sidebar.tsx">
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut,} from "lucide-react"
+
+const navItems = [
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "Pet Profiles", icon: PawPrint, href: "/pets" },
+  { label: "Medical Records", icon: FileText, href: "/records" },
+  { label: "Vaccinations", icon: Syringe, href: "/vaccinations" },
+  { label: "Documents", icon: FileStack, href: "/documents" },
+  { label: "Appointments", icon: Calendar, href: "/appointments" },
+  { label: "User Accounts", icon: Users, href: "/users" },
+]
+
+export function Sidebar() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  return (
+    <aside className="sticky top-0 flex h-screen w-64 flex-col bg-slate-950 text-slate-300">
+      {/* Logo */}
+      <div className="flex items-center gap-2 border-b border-white/10 px-5 py-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-green-500">
+          <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
+        </div>
+        <div className="leading-tight">
+          <div className="text-sm font-bold text-white">PetVet MR</div>
+          <div className="text-xs text-teal-400">Clinic Portal</div>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-1 px-3 py-4">
+        {navItems.map((item) => {
+          const isActive = item.href === location.pathname
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-sm"
+                  : "text-slate-300 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {item.label}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* User footer */}
+      <div className="border-t border-white/10 p-4">
+        <div className="mb-2 flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
+            DS
+          </div>
+          <div className="leading-tight">
+            <div className="text-sm font-semibold text-white">Dr. Sarah Reyes</div>
+            <div className="flex items-center gap-1 text-xs text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Administrator
+            </div>
+          </div>
+        </div>
+        <button onClick={() => navigate("/login")} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
+      </div>
+    </aside>
+  )
+}
+</file>
+
+<file path="src/components/shared/logo.d.ts">
+interface LogoProps {
+    className?: string;
+}
+export declare function Logo({ className }: LogoProps): import("react").JSX.Element;
+export {};
+</file>
+
+<file path="src/components/shared/logo.js">
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { PawPrint } from "lucide-react";
+export function Logo({ className }) {
+    return (_jsxs("div", { className: `flex items-center gap-2 ${className ?? ""}`, children: [_jsx("div", { className: "flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-green-500", children: _jsx(PawPrint, { className: "h-5 w-5 text-white", strokeWidth: 2.5 }) }), _jsxs("span", { className: "text-lg font-bold tracking-tight text-slate-900", children: ["PetVet ", _jsx("span", { className: "text-teal-600", children: "MR" })] })] }));
+}
 </file>
 
 <file path="src/components/shared/logo.tsx">
@@ -1088,6 +1623,1967 @@ function Label({ className, ...props }: React.ComponentProps<"label">) {
 export { Label }
 </file>
 
+<file path="src/features/appointments/Appointmentspage.tsx">
+import { useState } from "react"
+import { AppShell } from "@/components/layout/Appshell"
+import { Plus, X } from "lucide-react"
+
+interface Appointment {
+  id: string
+  pet: string
+  avatarColor: string
+  owner: string
+  reason: string
+  date: string // YYYY-MM-DD
+  time: string // e.g. "09:30"
+  vet: string
+  status: "Scheduled" | "Completed"
+}
+
+const initialAppointments: Appointment[] = [
+  { id: "1", pet: "Luna", avatarColor: "bg-orange-200", owner: "Carlos Mendez", reason: "Dermatitis follow-up", date: "2026-06-24", time: "09:30", vet: "Dr. Sarah Reyes", status: "Scheduled" },
+  { id: "2", pet: "Titan", avatarColor: "bg-amber-300", owner: "Carlos Mendez", reason: "Physiotherapy assessment", date: "2026-06-25", time: "14:00", vet: "Dr. James Park", status: "Scheduled" },
+  { id: "3", pet: "Bella", avatarColor: "bg-yellow-200", owner: "Maria Santos", reason: "Pre-surgical exam (spay)", date: "2026-07-08", time: "10:00", vet: "Dr. Sarah Reyes", status: "Scheduled" },
+  { id: "4", pet: "Mochi", avatarColor: "bg-slate-300", owner: "Ana Torres", reason: "URI follow-up check", date: "2026-06-10", time: "11:00", vet: "Dr. Sarah Reyes", status: "Completed" },
+  { id: "5", pet: "Neko", avatarColor: "bg-slate-500", owner: "Ana Torres", reason: "Annual wellness exam", date: "2026-06-18", time: "15:30", vet: "Dr. James Park", status: "Completed" },
+  { id: "6", pet: "Luna", avatarColor: "bg-orange-200", owner: "Carlos Mendez", reason: "Initial dermatitis consult", date: "2026-06-10", time: "09:00", vet: "Dr. Sarah Reyes", status: "Completed" },
+]
+
+const petOptions = [
+  { name: "Luna", avatarColor: "bg-orange-200", owner: "Carlos Mendez" },
+  { name: "Mochi", avatarColor: "bg-slate-300", owner: "Ana Torres" },
+  { name: "Titan", avatarColor: "bg-amber-300", owner: "Carlos Mendez" },
+  { name: "Bella", avatarColor: "bg-yellow-200", owner: "Maria Santos" },
+  { name: "Neko", avatarColor: "bg-slate-500", owner: "Ana Torres" },
+]
+const vetOptions = ["Dr. Sarah Reyes", "Dr. James Park"]
+
+const emptyForm = {
+  pet: "",
+  date: "",
+  time: "09:00",
+  reason: "",
+  vet: vetOptions[0],
+}
+
+function formatDateBox(dateStr: string) {
+  const d = new Date(dateStr + "T00:00:00")
+  return {
+    day: d.toLocaleDateString("en-US", { day: "2-digit" }),
+    month: d.toLocaleDateString("en-US", { month: "short" }),
+  }
+}
+
+export default function AppointmentsPage() {
+  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments)
+  const [activeTab, setActiveTab] = useState<"Scheduled" | "Completed">("Scheduled")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+
+  const visibleAppointments = appointments
+    .filter((a) => a.status === activeTab)
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setForm(emptyForm)
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.pet || !form.date || !form.time || !form.vet) return
+
+    const petMatch = petOptions.find((p) => p.name === form.pet)
+
+    const newAppointment: Appointment = {
+      id: crypto.randomUUID(),
+      pet: form.pet,
+      avatarColor: petMatch?.avatarColor ?? "bg-slate-300",
+      owner: petMatch?.owner ?? "—",
+      reason: form.reason.trim() || "General visit",
+      date: form.date,
+      time: form.time,
+      vet: form.vet,
+      status: "Scheduled",
+    }
+
+    setAppointments((prev) => [...prev, newAppointment])
+    setActiveTab("Scheduled")
+    closeModal()
+  }
+
+  return (
+    <AppShell>
+      <div className="space-y-4 p-8">
+        {/* Tabs + Book button */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-1">
+            {(["Scheduled", "Completed"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+                  activeTab === tab
+                    ? "bg-gradient-to-r from-teal-700 to-teal-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Book Appointment
+          </button>
+        </div>
+
+        {/* Appointment cards */}
+        <div className="space-y-3">
+          {visibleAppointments.map((a) => {
+            const { day, month } = formatDateBox(a.date)
+            return (
+              <div
+                key={a.id}
+                className="flex items-center justify-between rounded-2xl border bg-white px-5 py-4 shadow-sm"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-teal-50 py-1.5">
+                    <span className="text-lg font-bold leading-tight text-teal-700">{day}</span>
+                    <span className="text-xs font-medium uppercase text-teal-500">{month}</span>
+                  </div>
+                  <div className={`h-10 w-10 shrink-0 rounded-full ${a.avatarColor}`} />
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      {a.pet} <span className="font-normal text-slate-400">—</span>{" "}
+                      <span className="font-normal text-teal-600">{a.owner}</span>
+                    </div>
+                    <div className="text-xs text-slate-500">{a.reason}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-slate-900">{a.time}</div>
+                    <div className="text-xs text-teal-600">{a.vet}</div>
+                  </div>
+                  <span
+                    className={`rounded-md border px-3 py-1 text-xs font-medium ${
+                      a.status === "Scheduled"
+                        ? "border-sky-200 bg-sky-50 text-sky-700"
+                        : "border-slate-200 bg-slate-50 text-slate-600"
+                    }`}
+                  >
+                    {a.status}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+
+          {visibleAppointments.length === 0 && (
+            <p className="rounded-2xl border bg-white p-6 text-sm text-slate-500">
+              No {activeTab.toLowerCase()} appointments.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Book Appointment Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Book Appointment</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="space-y-4 p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pet
+                </label>
+                <select
+                  required
+                  value={form.pet}
+                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  <option value="">— Select pet —</option>
+                  {petOptions.map((p) => (
+                    <option key={p.name} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={form.date}
+                    onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={form.time}
+                    onChange={(e) => setForm({ ...form, time: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Reason for Visit
+                </label>
+                <textarea
+                  value={form.reason}
+                  onChange={(e) => setForm({ ...form, reason: e.target.value })}
+                  placeholder="e.g. Annual wellness check, follow-up..."
+                  rows={2}
+                  className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Veterinarian
+                </label>
+                <select
+                  required
+                  value={form.vet}
+                  onChange={(e) => setForm({ ...form, vet: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  {vetOptions.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="h-11 flex-1 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AppShell>
+  )
+}
+</file>
+
+<file path="src/features/dashboard/Dashboardpage.tsx">
+import { AppShell } from "@/components/layout/Appshell"
+import { PawPrint, ClipboardList, CalendarDays, Syringe, } from "lucide-react"
+
+const stats = [
+  { label: "Total Pets", value: 5, icon: PawPrint, color: "from-sky-500 to-sky-600" },
+  { label: "Records This Month", value: 5, icon: ClipboardList, color: "from-emerald-500 to-emerald-600" },
+  { label: "Upcoming Appts", value: 3, icon: CalendarDays, color: "from-amber-500 to-amber-600" },
+  { label: "Vaccines Due", value: 1, icon: Syringe, color: "from-orange-500 to-red-500" },
+]
+
+const appointments = [
+  { date: "24\nJun", pet: "Luna", owner: "Carlos Mendez", note: "Dermatitis follow-up", time: "09:30" },
+  { date: "25\nJun", pet: "Titan", owner: "Carlos Mendez", note: "Physiotherapy assessment", time: "14:00" },
+  { date: "08\nJul", pet: "Bella", owner: "Maria Santos", note: "Pre-surgical exam (spay)", time: "10:00" },
+]
+
+const recentPatients = [
+  { pet: "Luna", type: "Dog · Female", breed: "Labrador Retriever", owner: "Carlos Mendez", lastVisit: "2025-06-10", status: "Active" },
+  { pet: "Mochi", type: "Cat · Male", breed: "Scottish Fold", owner: "Ana Torres", lastVisit: "2025-05-18", status: "Active" },
+]
+
+export default function DashboardPage() {
+  return (
+    <AppShell>
+      <div className="space-y-6 p-8">
+        {/* Welcome banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Clinic is open · Friday, July 10
+          </span>
+          <h2 className="mt-4 flex items-center gap-2 text-3xl font-bold text-white">
+            Good afternoon!
+          </h2>
+          <p className="mt-2 text-slate-300">
+            You have <span className="font-semibold text-white">3 appointments</span> scheduled today and{" "}
+            <span className="font-semibold text-white">1 vaccine due</span>.
+          </p>
+        </div>
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat) => {
+            const Icon = stat.icon
+            return (
+              <div
+                key={stat.label}
+                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.color} p-5 text-white shadow-sm`}
+              >
+                <div className="mb-6 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="text-sm text-white/80">{stat.label}</div>
+                <div className="absolute -bottom-4 -right-4 h-20 w-20 rounded-full bg-white/10" />
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Appointments + Vaccinations */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <div className="flex items-center justify-between border-b bg-emerald-50/50 px-5 py-3">
+              <div className="flex items-center gap-2 font-semibold text-slate-900">
+                <CalendarDays className="h-4 w-4 text-emerald-600" />
+                Upcoming Appointments
+              </div>
+              <span className="text-xs text-slate-500">{appointments.length}</span>
+            </div>
+            <div className="divide-y">
+              {appointments.map((a) => (
+                <div key={a.pet + a.date} className="flex items-center justify-between px-5 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="whitespace-pre-line rounded-lg bg-slate-100 px-2 py-1 text-center text-xs font-semibold leading-tight text-slate-700">
+                      {a.date}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {a.pet} · <span className="font-normal text-slate-500">{a.owner}</span>
+                      </div>
+                      <div className="text-xs text-slate-500">{a.note}</div>
+                    </div>
+                  </div>
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    {a.time}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <div className="flex items-center justify-between border-b bg-amber-50/50 px-5 py-3">
+              <div className="flex items-center gap-2 font-semibold text-slate-900">
+                <Syringe className="h-4 w-4 text-amber-600" />
+                Vaccination Reminders
+              </div>
+              <span className="text-xs font-medium text-amber-600">1 due</span>
+            </div>
+            <div className="flex items-center justify-between px-5 py-3">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-slate-200" />
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Luna</div>
+                  <div className="text-xs text-slate-500">Bordetella</div>
+                </div>
+              </div>
+              <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                Due Soon
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Patients table */}
+        <div className="overflow-hidden rounded-2xl border bg-white">
+          <div className="flex items-center justify-between border-b bg-emerald-50/50 px-5 py-3">
+            <div className="flex items-center gap-2 font-semibold text-slate-900">
+              <PawPrint className="h-4 w-4 text-emerald-600" />
+              Recent Patients
+            </div>
+            <span className="text-xs text-slate-500">{recentPatients.length} total</span>
+          </div>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b text-xs uppercase tracking-wide text-slate-400">
+                <th className="px-5 py-3 font-medium">Pet</th>
+                <th className="px-5 py-3 font-medium">Breed</th>
+                <th className="px-5 py-3 font-medium">Owner</th>
+                <th className="px-5 py-3 font-medium">Last Visit</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {recentPatients.map((p) => (
+                <tr key={p.pet}>
+                  <td className="flex items-center gap-3 px-5 py-3">
+                    <div className="h-9 w-9 rounded-full bg-slate-200" />
+                    <div>
+                      <div className="font-semibold text-slate-900">{p.pet}</div>
+                      <div className="text-xs text-slate-500">{p.type}</div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-teal-600">{p.breed}</td>
+                  <td className="px-5 py-3 text-slate-700">{p.owner}</td>
+                  <td className="px-5 py-3 text-slate-500">{p.lastVisit}</td>
+                  <td className="px-5 py-3">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </AppShell>
+  )
+}
+</file>
+
+<file path="src/features/documents/Documentspage.tsx">
+import { useState } from "react"
+import { AppShell } from "@/components/layout/Appshell"
+import { Upload, Download, FileText, X } from "lucide-react"
+
+interface Document {
+  id: string
+  title: string
+  type: "Lab Result" | "Radiology" | "Clinical Report"
+  pet: string
+  avatarColor: string
+  date: string
+  sizeLabel: string
+}
+
+const initialDocuments: Document[] = [
+  { id: "1", title: "Skin culture results – June 2025", type: "Lab Result", pet: "Luna", avatarColor: "bg-orange-200", date: "2025-06-13", sizeLabel: "1.2 MB" },
+  { id: "2", title: "Left stifle X-ray – June 2025", type: "Radiology", pet: "Titan", avatarColor: "bg-amber-300", date: "2025-06-01", sizeLabel: "3.8 MB" },
+  { id: "3", title: "Annual blood panel – March 2025", type: "Lab Result", pet: "Luna", avatarColor: "bg-orange-200", date: "2025-03-22", sizeLabel: "0.4 MB" },
+  { id: "4", title: "12-month wellness report", type: "Clinical Report", pet: "Bella", avatarColor: "bg-yellow-200", date: "2025-06-15", sizeLabel: "0.8 MB" },
+]
+
+const petOptions = [
+  { name: "Luna", avatarColor: "bg-orange-200" },
+  { name: "Mochi", avatarColor: "bg-slate-300" },
+  { name: "Titan", avatarColor: "bg-amber-300" },
+  { name: "Bella", avatarColor: "bg-yellow-200" },
+  { name: "Neko", avatarColor: "bg-slate-500" },
+]
+const docTypes: Document["type"][] = ["Lab Result", "Radiology", "Clinical Report"]
+
+const typeStyles: Record<Document["type"], string> = {
+  "Lab Result": "bg-sky-100 text-sky-600",
+  "Radiology": "bg-orange-100 text-orange-600",
+  "Clinical Report": "bg-emerald-100 text-emerald-600",
+}
+
+const emptyForm = {
+  pet: "",
+  type: "Lab Result" as Document["type"],
+  description: "",
+  file: null as File | null,
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+export default function DocumentsPage() {
+  const [documents, setDocuments] = useState<Document[]>(initialDocuments)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setForm(emptyForm)
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.pet || !form.description.trim()) return
+
+    const petMatch = petOptions.find((p) => p.name === form.pet)
+
+    const newDoc: Document = {
+      id: crypto.randomUUID(),
+      title: form.description.trim(),
+      type: form.type,
+      pet: form.pet,
+      avatarColor: petMatch?.avatarColor ?? "bg-slate-300",
+      date: new Date().toISOString().slice(0, 10),
+      sizeLabel: form.file ? formatSize(form.file.size) : "—",
+    }
+
+    setDocuments((prev) => [newDoc, ...prev])
+    closeModal()
+  }
+
+  const handleDownload = (doc: Document) => {
+    // No backend yet — this is a placeholder until real file storage is wired up.
+    console.log("TODO: download", doc.id)
+  }
+
+  return (
+    <AppShell>
+      <div className="space-y-4 p-8">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Upload className="h-4 w-4" />
+            Upload Document
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {documents.map((doc) => (
+            <div key={doc.id} className="rounded-2xl border bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-start gap-3">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${typeStyles[doc.type]}`}>
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-slate-900">{doc.title}</div>
+                  <div className="text-xs text-teal-600">{doc.type}</div>
+                </div>
+              </div>
+
+              <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
+                <div className={`h-5 w-5 shrink-0 rounded-full ${doc.avatarColor}`} />
+                <span>{doc.pet} · {doc.date} · {doc.sizeLabel}</span>
+              </div>
+
+              <button
+                onClick={() => handleDownload(doc)}
+                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 text-sm font-medium text-teal-700 hover:bg-slate-50"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {documents.length === 0 && (
+          <p className="text-sm text-slate-500">No documents uploaded yet.</p>
+        )}
+      </div>
+
+      {/* Upload Document Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Upload Document</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="space-y-4 p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pet
+                </label>
+                <select
+                  required
+                  value={form.pet}
+                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  <option value="">— Select pet —</option>
+                  {petOptions.map((p) => (
+                    <option key={p.name} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Document Type
+                </label>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as Document["type"] })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  {docTypes.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="e.g. Blood test results – June 2025"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Select File
+                </label>
+                <input
+                  type="file"
+                  onChange={(e) => setForm({ ...form, file: e.target.files?.[0] ?? null })}
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-teal-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-teal-700"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="h-11 flex-1 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AppShell>
+  )
+}
+</file>
+
+<file path="src/features/pets/PetProfilespage.tsx">
+import { useState } from "react"
+import { AppShell } from "@/components/layout/Appshell"
+import { Search, Plus, X } from "lucide-react"
+
+interface Pet {
+  id: string
+  name: string
+  breed: string
+  species: "Dog" | "Cat"
+  age: string
+  weight: string
+  gender: "Male" | "Female"
+  owner: string
+  avatarColor: string
+}
+
+const initialPets: Pet[] = [
+  { id: "1", name: "Luna", breed: "Labrador Retriever", species: "Dog", age: "3 yrs", weight: "28 kg", gender: "Female", owner: "Carlos Mendez", avatarColor: "bg-orange-200" },
+  { id: "2", name: "Mochi", breed: "Scottish Fold", species: "Cat", age: "2 yrs", weight: "4.2 kg", gender: "Male", owner: "Ana Torres", avatarColor: "bg-slate-300" },
+  { id: "3", name: "Titan", breed: "German Shepherd", species: "Dog", age: "5 yrs", weight: "35 kg", gender: "Male", owner: "Carlos Mendez", avatarColor: "bg-amber-300" },
+  { id: "4", name: "Bella", breed: "Golden Retriever", species: "Dog", age: "1 yr", weight: "22 kg", gender: "Female", owner: "Maria Santos", avatarColor: "bg-yellow-200" },
+  { id: "5", name: "Neko", breed: "Maine Coon", species: "Cat", age: "4 yrs", weight: "6.1 kg", gender: "Female", owner: "Ana Torres", avatarColor: "bg-slate-500" },
+]
+
+const owners = ["Carlos Mendez", "Ana Torres", "Maria Santos"]
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+const emptyForm = {
+  name: "",
+  species: "Dog" as "Dog" | "Cat",
+  breed: "",
+  age: "",
+  gender: "Male" as "Male" | "Female",
+  weight: "",
+  owner: "",
+}
+
+export default function PetProfilesPage() {
+  const [query, setQuery] = useState("")
+  const [pets, setPets] = useState<Pet[]>(initialPets)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+
+  const filteredPets = pets.filter((pet) =>
+    pet.name.toLowerCase().includes(query.toLowerCase())
+  )
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setForm(emptyForm)
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name.trim() || !form.owner) return
+
+    const newPet: Pet = {
+      id: crypto.randomUUID(),
+      name: form.name.trim(),
+      breed: form.breed.trim() || "Unknown breed",
+      species: form.species,
+      age: form.age.trim() || "—",
+      weight: form.weight.trim() || "—",
+      gender: form.gender,
+      owner: form.owner,
+      avatarColor: avatarColors[pets.length % avatarColors.length],
+    }
+
+    setPets((prev) => [...prev, newPet])
+    closeModal()
+  }
+
+  return (
+    <AppShell>
+      <div className="space-y-6 p-8">
+        {/* Search + Add */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search pets..."
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm shadow-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+            />
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Add new pet
+          </button>
+        </div>
+
+        {/* Pet cards grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredPets.map((pet) => (
+            <div key={pet.id} className="rounded-2xl border bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`h-11 w-11 shrink-0 rounded-full ${pet.avatarColor}`} />
+                  <div>
+                    <div className="font-semibold text-slate-900">{pet.name}</div>
+                    <div className="text-xs text-teal-600">{pet.breed}</div>
+                  </div>
+                </div>
+                <span
+                  className={`rounded-md px-2 py-1 text-xs font-medium ${
+                    pet.species === "Dog"
+                      ? "bg-sky-100 text-sky-700"
+                      : "bg-purple-100 text-purple-700"
+                  }`}
+                >
+                  {pet.species}
+                </span>
+              </div>
+
+              <div className="mb-3 grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-slate-100 py-2 text-center">
+                  <div className="text-sm font-semibold text-slate-900">{pet.age}</div>
+                  <div className="text-[11px] text-slate-500">Age</div>
+                </div>
+                <div className="rounded-lg bg-slate-100 py-2 text-center">
+                  <div className="text-sm font-semibold text-slate-900">{pet.weight}</div>
+                  <div className="text-[11px] text-slate-500">Weight</div>
+                </div>
+                <div className="rounded-lg bg-slate-100 py-2 text-center">
+                  <div className="text-sm font-semibold text-slate-900">{pet.gender}</div>
+                  <div className="text-[11px] text-slate-500">Gender</div>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-500">
+                Owner: <span className="text-slate-700">{pet.owner}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredPets.length === 0 && (
+          <p className="text-sm text-slate-500">No pets match "{query}".</p>
+        )}
+      </div>
+
+      {/* Add Pet Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+            {/* Modal header */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Add New Pet</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal form */}
+            <form onSubmit={handleSave} className="space-y-4 p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pet Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g. Buddy"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Species
+                  </label>
+                  <select
+                    value={form.species}
+                    onChange={(e) => setForm({ ...form, species: e.target.value as "Dog" | "Cat" })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="Dog">Dog</option>
+                    <option value="Cat">Cat</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Breed
+                  </label>
+                  <input
+                    type="text"
+                    value={form.breed}
+                    onChange={(e) => setForm({ ...form, breed: e.target.value })}
+                    placeholder="e.g. Labrador"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Age
+                  </label>
+                  <input
+                    type="text"
+                    value={form.age}
+                    onChange={(e) => setForm({ ...form, age: e.target.value })}
+                    placeholder="e.g. 2 yrs"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Gender
+                  </label>
+                  <select
+                    value={form.gender}
+                    onChange={(e) => setForm({ ...form, gender: e.target.value as "Male" | "Female" })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Weight
+                  </label>
+                  <input
+                    type="text"
+                    value={form.weight}
+                    onChange={(e) => setForm({ ...form, weight: e.target.value })}
+                    placeholder="e.g. 12 kg"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Owner
+                  </label>
+                  <select
+                    required
+                    value={form.owner}
+                    onChange={(e) => setForm({ ...form, owner: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Select owner —</option>
+                    {owners.map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="h-11 flex-1 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AppShell>
+  )
+}
+</file>
+
+<file path="src/features/records/MedicalRecordspage.tsx">
+import { useState } from "react"
+import { AppShell } from "@/components/layout/Appshell"
+import { Plus, Eye, X } from "lucide-react"
+
+interface MedicalRecord {
+  id: string
+  date: string
+  pet: string
+  avatarColor: string
+  diagnosis: string
+  treatment: string
+  notes: string
+  vet: string
+  prescriptions: string[]
+}
+
+const initialRecords: MedicalRecord[] = [
+  { id: "1", date: "2025-06-10", pet: "Luna", avatarColor: "bg-orange-200", diagnosis: "Mild dermatitis, secondary bacterial infection", treatment: "Topical antibiotic cream, medicated shampoo 2x/week", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["Cephalexin 250mg – BID x 10 days", "Medicated shampoo"] },
+  { id: "2", date: "2025-03-22", pet: "Luna", avatarColor: "bg-orange-200", diagnosis: "Annual wellness check — no issues found", treatment: "Preventive care, heartworm test negative", notes: "", vet: "Dr. James Park", prescriptions: ["Heartgard Plus – monthly"] },
+  { id: "3", date: "2025-05-18", pet: "Mochi", avatarColor: "bg-slate-300", diagnosis: "Upper respiratory infection (viral)", treatment: "Supportive care, hydration, appetite stimulant", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["Mirtazapine 1.88mg – q72h", "Sub-Q fluids"] },
+  { id: "4", date: "2025-06-01", pet: "Titan", avatarColor: "bg-amber-300", diagnosis: "Cruciate ligament strain, left stifle", treatment: "NSAIDs, restricted activity 4 weeks, physio referral", notes: "", vet: "Dr. James Park", prescriptions: ["Carprofen 75mg – BID x 14 days", "Physio referral"] },
+  { id: "5", date: "2025-06-15", pet: "Bella", avatarColor: "bg-yellow-200", diagnosis: "Routine puppy exam, 12 months", treatment: "Spay scheduled for July 2025", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["None"] },
+]
+
+const petOptions = ["Luna", "Mochi", "Titan", "Bella", "Neko"]
+const vetOptions = ["Dr. Sarah Reyes", "Dr. James Park"]
+
+const emptyForm = {
+  pet: "",
+  date: new Date().toISOString().slice(0, 10),
+  diagnosis: "",
+  treatment: "",
+  notes: "",
+  vet: vetOptions[0],
+}
+
+export default function MedicalRecordsPage() {
+  const [records, setRecords] = useState<MedicalRecord[]>(initialRecords)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyForm)
+  const [prescriptions, setPrescriptions] = useState<string[]>([])
+  const [rxDraft, setRxDraft] = useState("")
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setForm(emptyForm)
+    setPrescriptions([])
+    setRxDraft("")
+  }
+
+  const addPrescription = () => {
+    if (!rxDraft.trim()) return
+    setPrescriptions((prev) => [...prev, rxDraft.trim()])
+    setRxDraft("")
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.pet || !form.date || !form.diagnosis.trim() || !form.vet) return
+
+    const petAvatar =
+      initialRecords.find((r) => r.pet === form.pet)?.avatarColor ?? "bg-slate-300"
+
+    const newRecord: MedicalRecord = {
+      id: crypto.randomUUID(),
+      date: form.date,
+      pet: form.pet,
+      avatarColor: petAvatar,
+      diagnosis: form.diagnosis.trim(),
+      treatment: form.treatment.trim() || "—",
+      notes: form.notes.trim(),
+      vet: form.vet,
+      prescriptions: prescriptions.length ? prescriptions : ["None"],
+    }
+
+    setRecords((prev) =>
+      [...prev, newRecord].sort((a, b) => b.date.localeCompare(a.date))
+    )
+    closeModal()
+  }
+
+  return (
+    <AppShell>
+      <div className="space-y-4 p-8">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            New Record
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border bg-white">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <th className="px-6 py-3 font-medium">Date</th>
+                <th className="px-6 py-3 font-medium">Pet</th>
+                <th className="px-6 py-3 font-medium">Diagnosis</th>
+                <th className="px-6 py-3 font-medium">Vet</th>
+                <th className="px-6 py-3 font-medium">Prescriptions</th>
+                <th className="w-10 px-6 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {records.map((r) => (
+                <>
+                  <tr key={r.id} className="align-top">
+                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
+                      {r.date}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-7 w-7 shrink-0 rounded-full ${r.avatarColor}`} />
+                        <span className="font-medium text-slate-900">{r.pet}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-slate-900">{r.diagnosis}</div>
+                      <div className="text-xs text-teal-600">{r.treatment}</div>
+                    </td>
+                    <td className="px-6 py-4 text-teal-700">{r.vet}</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {r.prescriptions.length === 1 && r.prescriptions[0] === "None"
+                        ? "0 rx"
+                        : `${r.prescriptions.length} rx`}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
+                        className="text-teal-600 hover:text-teal-800"
+                        aria-label="View record details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedId === r.id && (
+                    <tr className="bg-slate-50">
+                      <td colSpan={6} className="space-y-1 px-6 py-4 text-sm text-slate-600">
+                        {r.notes && (
+                          <div>
+                            <span className="font-semibold text-slate-800">Notes: </span>
+                            {r.notes}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-semibold text-slate-800">Prescriptions: </span>
+                          {r.prescriptions.join(", ")}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+            </tbody>
+          </table>
+
+          {records.length === 0 && (
+            <p className="p-6 text-sm text-slate-500">No records yet.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Add Medical Record Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Add Medical Record</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="space-y-4 p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pet
+                </label>
+                <select
+                  required
+                  value={form.pet}
+                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  <option value="">— Select pet —</option>
+                  {petOptions.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Visit Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Diagnosis
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.diagnosis}
+                  onChange={(e) => setForm({ ...form, diagnosis: e.target.value })}
+                  placeholder="e.g. Upper respiratory infection"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Treatment
+                </label>
+                <textarea
+                  value={form.treatment}
+                  onChange={(e) => setForm({ ...form, treatment: e.target.value })}
+                  placeholder="e.g. Supportive care, antibiotics..."
+                  rows={2}
+                  className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Notes
+                </label>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  placeholder="Additional observations..."
+                  rows={2}
+                  className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Attending Vet
+                </label>
+                <select
+                  required
+                  value={form.vet}
+                  onChange={(e) => setForm({ ...form, vet: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  {vetOptions.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Prescriptions
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={rxDraft}
+                    onChange={(e) => setRxDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        addPrescription()
+                      }
+                    }}
+                    placeholder="e.g. Amoxicillin 250mg – BID x 7 days"
+                    className="h-11 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                  <button
+                    type="button"
+                    onClick={addPrescription}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-white hover:opacity-90"
+                    aria-label="Add prescription"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                {prescriptions.length > 0 && (
+                  <ul className="space-y-1 pt-1">
+                    {prescriptions.map((rx, i) => (
+                      <li
+                        key={i}
+                        className="flex items-center justify-between rounded-lg bg-teal-50 px-3 py-1.5 text-xs text-teal-800"
+                      >
+                        {rx}
+                        <button
+                          type="button"
+                          onClick={() => setPrescriptions((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="text-teal-500 hover:text-teal-800"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="h-11 flex-1 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AppShell>
+  )
+}
+</file>
+
+<file path="src/features/users/UserAccountspage.tsx">
+import { useState } from "react"
+import { AppShell } from "@/components/layout/Appshell"
+import { Plus, X, Pencil, UserX } from "lucide-react"
+
+interface UserAccount {
+  id: string
+  name: string
+  email: string
+  role: "Admin / Vet" | "Pet Owner"
+  petsCount: number | null
+  status: "Active" | "Inactive"
+  avatarColor: string
+}
+
+const initialUsers: UserAccount[] = [
+  { id: "1", name: "Dr. Sarah Reyes", email: "admin@petvet.com", role: "Admin / Vet", petsCount: null, status: "Active", avatarColor: "bg-teal-600" },
+  { id: "2", name: "Carlos Mendez", email: "carlos@example.com", role: "Pet Owner", petsCount: 2, status: "Active", avatarColor: "bg-emerald-500" },
+  { id: "3", name: "Ana Torres", email: "ana@example.com", role: "Pet Owner", petsCount: 2, status: "Active", avatarColor: "bg-sky-500" },
+  { id: "4", name: "Dr. James Park", email: "jpark@petvet.com", role: "Admin / Vet", petsCount: null, status: "Active", avatarColor: "bg-indigo-600" },
+  { id: "5", name: "Maria Santos", email: "maria@example.com", role: "Pet Owner", petsCount: 1, status: "Active", avatarColor: "bg-green-600" },
+]
+
+const roleOptions: UserAccount["role"][] = ["Admin / Vet", "Pet Owner"]
+const avatarColors = ["bg-teal-600", "bg-emerald-500", "bg-sky-500", "bg-indigo-600", "bg-green-600", "bg-amber-500"]
+
+function getInitials(name: string) {
+  return name
+    .replace(/^Dr\.\s*/, "")
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+const emptyForm = {
+  name: "",
+  email: "",
+  role: "Pet Owner" as UserAccount["role"],
+  password: "",
+}
+
+const emptyEditForm = {
+  id: "",
+  name: "",
+  email: "",
+  role: "Pet Owner" as UserAccount["role"],
+  newPassword: "",
+}
+
+export default function UserAccountsPage() {
+  const [users, setUsers] = useState<UserAccount[]>(initialUsers)
+
+  // Add User modal state
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+
+  // Edit User modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editForm, setEditForm] = useState(emptyEditForm)
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setForm(emptyForm)
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name.trim() || !form.email.trim() || !form.password) return
+
+    const newUser: UserAccount = {
+      id: crypto.randomUUID(),
+      name: form.name.trim(),
+      email: form.email.trim(),
+      role: form.role,
+      petsCount: form.role === "Pet Owner" ? 0 : null,
+      status: "Active",
+      avatarColor: avatarColors[users.length % avatarColors.length],
+    }
+
+    setUsers((prev) => [...prev, newUser])
+    closeModal()
+  }
+
+  const toggleStatus = (id: string) => {
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === id
+          ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
+          : u
+      )
+    )
+  }
+
+  const openEditModal = (user: UserAccount) => {
+    setEditForm({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      newPassword: "",
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false)
+    setEditForm(emptyEditForm)
+  }
+
+  const handleEditSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editForm.name.trim() || !editForm.email.trim()) return
+
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === editForm.id
+          ? { ...u, name: editForm.name.trim(), email: editForm.email.trim(), role: editForm.role }
+          : u
+      )
+    )
+    // editForm.newPassword, if set, would be sent to the backend here once connected —
+    // it's intentionally not stored anywhere in local state.
+    closeEditModal()
+  }
+
+  return (
+    <AppShell>
+      <div className="space-y-4 p-8">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Add User
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border bg-white">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <th className="px-6 py-3 font-medium">User</th>
+                <th className="px-6 py-3 font-medium">Email</th>
+                <th className="px-6 py-3 font-medium">Role</th>
+                <th className="px-6 py-3 font-medium">Pets</th>
+                <th className="px-6 py-3 font-medium">Status</th>
+                <th className="px-6 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${u.avatarColor}`}>
+                        {getInitials(u.name)}
+                      </div>
+                      <span className="font-medium text-slate-900">{u.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 font-mono text-xs text-slate-500">{u.email}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`rounded-md px-2 py-1 text-xs font-medium ${
+                        u.role === "Admin / Vet"
+                          ? "bg-sky-100 text-sky-700"
+                          : "bg-emerald-100 text-emerald-700"
+                      }`}
+                    >
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-600">{u.petsCount ?? "—"}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                        u.status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${u.status === "Active" ? "bg-emerald-500" : "bg-slate-400"}`} />
+                      {u.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <button
+                        className="text-slate-500 hover:text-teal-600"
+                        aria-label="Edit user"
+                        onClick={() => openEditModal(u)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        className="text-red-400 hover:text-red-600"
+                        aria-label="Toggle active status"
+                        onClick={() => toggleStatus(u.id)}
+                      >
+                        <UserX className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {users.length === 0 && (
+            <p className="p-6 text-sm text-slate-500">No users yet.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Add User Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between px-6 py-4">
+              <h2 className="text-lg font-bold text-slate-900">Add New User</h2>
+              <button onClick={closeModal} className="text-slate-400 hover:text-slate-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="space-y-4 px-6 pb-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Full Name"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="Email Address"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Role
+                </label>
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value as UserAccount["role"] })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  {roleOptions.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Password"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="h-11 w-full rounded-lg bg-gradient-to-r from-slate-900 to-teal-800 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+              >
+                Create Account
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Edit User</h2>
+              <button onClick={closeEditModal} className="text-white/80 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSave} className="space-y-4 p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Role
+                </label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserAccount["role"] })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  {roleOptions.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                Leave password field empty to keep current password
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  New Password (Optional)
+                </label>
+                <input
+                  type="password"
+                  value={editForm.newPassword}
+                  onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
+                  placeholder="Enter new password or leave blank"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="h-11 flex-1 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AppShell>
+  )
+}
+</file>
+
+<file path="src/features/vaccinations/Vaccinationspage.tsx">
+import { useState } from "react"
+import { AppShell } from "@/components/layout/Appshell"
+import { Plus, X } from "lucide-react"
+
+interface Vaccination {
+  id: string
+  pet: string
+  avatarColor: string
+  vaccine: string
+  dateGiven: string
+  nextDue: string
+  batchNo: string
+  vet: string
+}
+
+const initialVaccinations: Vaccination[] = [
+  { id: "1", pet: "Luna", avatarColor: "bg-orange-200", vaccine: "Rabies", dateGiven: "2025-03-22", nextDue: "2026-03-22", batchNo: "RAB-2025-0441", vet: "Dr. James Park" },
+  { id: "2", pet: "Luna", avatarColor: "bg-orange-200", vaccine: "DHPP (Distemper/Parvo)", dateGiven: "2025-03-22", nextDue: "2026-03-22", batchNo: "DHPP-2025-1128", vet: "Dr. James Park" },
+  { id: "3", pet: "Luna", avatarColor: "bg-orange-200", vaccine: "Bordetella", dateGiven: "2024-10-05", nextDue: "2025-10-05", batchNo: "BOR-2024-0872", vet: "Dr. Sarah Reyes" },
+  { id: "4", pet: "Mochi", avatarColor: "bg-slate-300", vaccine: "FVRCP (Feline 3-in-1)", dateGiven: "2025-05-01", nextDue: "2026-05-01", batchNo: "FVR-2025-0503", vet: "Dr. Sarah Reyes" },
+  { id: "5", pet: "Titan", avatarColor: "bg-amber-300", vaccine: "Rabies", dateGiven: "2024-12-10", nextDue: "2025-12-10", batchNo: "RAB-2024-1901", vet: "Dr. James Park" },
+  { id: "6", pet: "Bella", avatarColor: "bg-yellow-200", vaccine: "Rabies", dateGiven: "2025-06-15", nextDue: "2026-06-15", batchNo: "RAB-2025-0819", vet: "Dr. Sarah Reyes" },
+  { id: "7", pet: "Bella", avatarColor: "bg-yellow-200", vaccine: "DHPP (Distemper/Parvo)", dateGiven: "2025-06-15", nextDue: "2026-06-15", batchNo: "DHPP-2025-2201", vet: "Dr. Sarah Reyes" },
+]
+
+const petOptions = [
+  { name: "Luna", avatarColor: "bg-orange-200" },
+  { name: "Mochi", avatarColor: "bg-slate-300" },
+  { name: "Titan", avatarColor: "bg-amber-300" },
+  { name: "Bella", avatarColor: "bg-yellow-200" },
+  { name: "Neko", avatarColor: "bg-slate-500" },
+]
+const vetOptions = ["Dr. Sarah Reyes", "Dr. James Park"]
+
+const emptyForm = {
+  pet: "",
+  vaccine: "",
+  dateGiven: new Date().toISOString().slice(0, 10),
+  nextDue: "",
+  batchNo: "",
+  vet: vetOptions[0],
+}
+
+function getStatus(nextDue: string): { label: string; className: string } {
+  const due = new Date(nextDue)
+  const today = new Date()
+  const daysUntilDue = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (daysUntilDue < 0) {
+    return { label: "Overdue", className: "border-red-300 bg-red-50 text-red-700" }
+  }
+  if (daysUntilDue <= 60) {
+    return { label: "Due Soon", className: "border-amber-300 bg-amber-50 text-amber-700" }
+  }
+  return { label: "Current", className: "border-emerald-300 bg-emerald-50 text-emerald-700" }
+}
+
+export default function Vaccinationspage() {
+  const [vaccinations, setVaccinations] = useState<Vaccination[]>(initialVaccinations)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setForm(emptyForm)
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.pet || !form.vaccine.trim() || !form.dateGiven || !form.vet) return
+
+    const petMatch = petOptions.find((p) => p.name === form.pet)
+
+    const newVaccination: Vaccination = {
+      id: crypto.randomUUID(),
+      pet: form.pet,
+      avatarColor: petMatch?.avatarColor ?? "bg-slate-300",
+      vaccine: form.vaccine.trim(),
+      dateGiven: form.dateGiven,
+      nextDue: form.nextDue || form.dateGiven,
+      batchNo: form.batchNo.trim() || "—",
+      vet: form.vet,
+    }
+
+    setVaccinations((prev) =>
+      [...prev, newVaccination].sort((a, b) => a.pet.localeCompare(b.pet))
+    )
+    closeModal()
+  }
+
+  return (
+    <AppShell>
+      <div className="space-y-4 p-8">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Record Vaccination
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border bg-white">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <th className="px-6 py-3 font-medium">Pet</th>
+                <th className="px-6 py-3 font-medium">Vaccine</th>
+                <th className="px-6 py-3 font-medium">Date Given</th>
+                <th className="px-6 py-3 font-medium">Batch No.</th>
+                <th className="px-6 py-3 font-medium">Next Due</th>
+                <th className="px-6 py-3 font-medium">Vet</th>
+                <th className="px-6 py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {vaccinations.map((v) => {
+                const status = getStatus(v.nextDue)
+                return (
+                  <tr key={v.id}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-7 w-7 shrink-0 rounded-full ${v.avatarColor}`} />
+                        <span className="font-medium text-slate-900">{v.pet}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-900">{v.vaccine}</td>
+                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
+                      {v.dateGiven}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-teal-600">
+                      {v.batchNo}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
+                      {v.nextDue}
+                    </td>
+                    <td className="px-6 py-4 text-teal-700">{v.vet}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-block rounded-md border px-2 py-1 text-xs font-medium ${status.className}`}
+                      >
+                        {status.label}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+
+          {vaccinations.length === 0 && (
+            <p className="p-6 text-sm text-slate-500">No vaccination records yet.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Record Vaccination Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Record Vaccination</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="space-y-4 p-6">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pet
+                </label>
+                <select
+                  required
+                  value={form.pet}
+                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  <option value="">— Select pet —</option>
+                  {petOptions.map((p) => (
+                    <option key={p.name} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Vaccine Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.vaccine}
+                  onChange={(e) => setForm({ ...form, vaccine: e.target.value })}
+                  placeholder="e.g. Rabies, DHPP, FVRCP"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Date Given
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={form.dateGiven}
+                    onChange={(e) => setForm({ ...form, dateGiven: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Next Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={form.nextDue}
+                    onChange={(e) => setForm({ ...form, nextDue: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Batch Number
+                </label>
+                <input
+                  type="text"
+                  value={form.batchNo}
+                  onChange={(e) => setForm({ ...form, batchNo: e.target.value })}
+                  placeholder="e.g. RAB-2025-0441"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Attending Vet
+                </label>
+                <select
+                  required
+                  value={form.vet}
+                  onChange={(e) => setForm({ ...form, vet: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  {vetOptions.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="h-11 flex-1 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AppShell>
+  )
+}
+</file>
+
 <file path="src/index.css">
 :root {
   --text: #6b6375;
@@ -1142,17 +3638,10 @@ export { Label }
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
-
 body {
   margin: 0;
 }
@@ -1202,72 +3691,6 @@ code {
 }
 </file>
 
-<file path="src/lib/auth/LoginForm.tsx">
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Logo } from "@/components/shared/logo"
-import { ArrowRight } from "lucide-react"
-
-export function LoginForm() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="flex justify-center">
-          <Logo />
-        </div>
-
-        <Card className="border-none shadow-lg">
-          <CardHeader className="space-y-1 pb-2">
-            <h1 className="text-2xl font-bold text-slate-900">Welcome back!</h1>
-            <p className="text-sm text-slate-500">
-              Sign in to manage your clinic or view your pet's records.
-            </p>
-          </CardHeader>
-
-          <CardContent>
-            <form className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@petvet.com"
-                  className="h-12 rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  className="h-12 rounded-xl"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="h-12 w-full rounded-xl bg-gradient-to-r from-teal-600 to-green-500 text-base font-semibold text-white hover:opacity-90"
-              >
-                <span className="flex items-center gap-2">
-                  Sign in <ArrowRight className="h-4 w-4" />
-                </span>
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-}
-</file>
-
 <file path="src/lib/utils.ts">
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
@@ -1281,13 +3704,158 @@ export function cn(...inputs: ClassValue[]) {
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
+import App from './App'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
+</file>
+
+<file path="src/services/api.ts">
+// The environment variable name follows the Vite convention used in the README.
+// Fallback to the default local development URL if the variable is missing.
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5165"
+
+function getToken() {
+  return localStorage.getItem("token")
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = getToken()
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  })
+
+  if (res.status === 401) {
+    localStorage.removeItem("token")
+    window.location.href = "/login"
+    throw new Error("Unauthorized")
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "")
+    throw new Error(`API error ${res.status}: ${body}`)
+  }
+
+  if (res.status === 204) return undefined as unknown as T
+  return res.json()
+}
+
+async function requestForm<T>(path: string, formData: FormData): Promise<T> {
+  const token = getToken()
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    body: formData,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (res.status === 401) {
+    localStorage.removeItem("token")
+    window.location.href = "/login"
+    throw new Error("Unauthorized")
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "")
+    throw new Error(`API error ${res.status}: ${body}`)
+  }
+
+  if (res.status === 204) return undefined as unknown as T
+  return res.json()
+}
+
+export const api = {
+  get: <T>(path: string) => request<T>(path),
+  post: <T>(path: string, data: unknown) =>
+    request<T>(path, { method: "POST", body: JSON.stringify(data) }),
+  put: <T>(path: string, data: unknown) =>
+    request<T>(path, { method: "PUT", body: JSON.stringify(data) }),
+  patch: <T>(path: string, data: unknown) =>
+    request<T>(path, { method: "PATCH", body: JSON.stringify(data) }),
+  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  postForm: <T>(path: string, formData: FormData) => requestForm<T>(path, formData),
+}
+</file>
+
+<file path="src/services/auth.tsx">
+import { createContext, useContext, useState } from "react"
+import type { ReactNode } from "react"
+import { api } from "./api"
+
+export type User = {
+  id: number
+  fullName: string
+  email: string
+  role: string
+}
+
+type LoginResponse = {
+  token: string
+  user: User
+}
+
+type AuthContextType = {
+  user: User | null
+  token: string | null
+  login: (email: string, password: string) => Promise<void>
+  logout: () => void
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(
+    () => localStorage.getItem("token") ?? null
+  )
+
+  const login = async (email: string, password: string) => {
+    const data = await api.post<LoginResponse>("/api/auth/login", {
+      email,
+      password,
+    })
+    setToken(data.token)
+    setUser(data.user)
+    localStorage.setItem("token", data.token)
+  }
+
+  const logout = () => {
+    setToken(null)
+    setUser(null)
+    localStorage.removeItem("token")
+    window.location.href = "/login"
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+/** Hook to access authentication helpers inside components. */
+export const useAuth = () => {
+  const ctx = useContext(AuthContext)
+  if (!ctx) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return ctx
+}
 </file>
 
 <file path="tsconfig.app.json">
@@ -1300,16 +3868,17 @@ createRoot(document.getElementById('root')!).render(
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
-
-    /* Bundler mode */
+    "composite": true,
+    "outDir": "./dist-ts",
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
@@ -1325,14 +3894,7 @@ createRoot(document.getElementById('root')!).render(
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": ["src"]
+  ]
 }
 </file>
 
@@ -1344,15 +3906,12 @@ createRoot(document.getElementById('root')!).render(
     "lib": ["ES2023"],
     "types": ["node"],
     "skipLibCheck": true,
-
-    /* Bundler mode */
+    "composite": true,
+    "outDir": "./dist-ts",
     "module": "nodenext",
-    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
 
-    /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
@@ -1362,14 +3921,39 @@ createRoot(document.getElementById('root')!).render(
 }
 </file>
 
+<file path="vite.config.d.ts">
+declare const _default: import("vite").UserConfig;
+export default _default;
+</file>
+
+<file path="vite.config.js">
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
+export default defineConfig({
+    plugins: [react(), tailwindcss()],
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './src'),
+        },
+    },
+});
+</file>
+
 <file path="vite.config.ts">
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import path from 'path'
 
 export default defineConfig({
-  plugins: [
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 })
 </file>
 

@@ -1,10 +1,65 @@
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, PawPrint } from "lucide-react"
 import catHero from "@/assets/CatDog.jpg"
+import { api } from "@/services/api"
+import { useAuth } from "@/services/auth"
+
+type Mode = "login" | "register"
 
 export function LoginForm() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
+
+  const [mode, setMode] = useState<Mode>("login")
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const switchMode = (next: Mode) => {
+    setMode(next)
+    setError("")
+    setPassword("")
+  }
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setIsSubmitting(true)
+    try {
+      await login(email, password)
+      navigate("/dashboard")
+    } catch {
+      setError("Invalid email or password.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setIsSubmitting(true)
+    try {
+      await api.post("/api/auth/register", {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password,
+      })
+      // Registration succeeded — drop them back into the login fields, pre-filled.
+      switchMode("login")
+    } catch {
+      setError("Could not create account. That email may already be registered.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* Left column — hero image */}
@@ -31,15 +86,12 @@ export function LoginForm() {
         </div>
       </div>
 
-      {/* Right column — login form */}
+      {/* Right column — auth form */}
       <div className="relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 p-4 lg:w-1/2">
-        {/* Decorative blurred blobs */}
         <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-teal-200/40 blur-3xl" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl" />
 
-        {/* Frosted glass card */}
         <div className="relative w-full max-w-sm space-y-6 rounded-3xl border border-white/60 bg-white/50 p-8 shadow-xl backdrop-blur-xl">
-          {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-green-500">
               <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
@@ -49,53 +101,164 @@ export function LoginForm() {
 
           <div className="space-y-2">
             <h1 className="!text-slate-900 text-3xl font-extrabold tracking-tight">
-              Welcome back!
+              {mode === "login" ? "Welcome!" : "Create an account"}
             </h1>
             <p className="text-sm text-slate-500">
-              Sign in to manage your clinic or view your pet's records.
+              {mode === "login"
+                ? "Sign in to manage your clinic or view your pet's records."
+                : "Register to track your pet's health records and appointments."}
             </p>
           </div>
 
-          <form className="space-y-5">
-            <div className="space-y-2">
-              <Label
-                htmlFor="email"
-                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
-              >
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="username"
-                className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
-              />
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+          {mode === "login" ? (
+            <form onSubmit={handleSignIn} className="space-y-5">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="email"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="username"
+                  className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="password"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="******"
+                  className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-14 w-full rounded-2xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 text-base font-semibold text-white shadow-md hover:opacity-90 disabled:opacity-60"
               >
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="******"
-                className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
-              />
-            </div>
+                <span className="flex items-center justify-center gap-2">
+                  {isSubmitting ? "Signing in..." : "Sign in"}
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleCreateAccount} className="space-y-5">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="fullName"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Full Name
+                </Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. John Smith"
+                  className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+                />
+              </div>
 
-            <Button
-              type="submit"
-              className="h-14 w-full rounded-2xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 text-base font-semibold text-white shadow-md hover:opacity-90"
-            >
-              <span className="flex items-center justify-center gap-2">
-                Sign in <ArrowRight className="h-4 w-4" />
-              </span>
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="regEmail"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Email
+                </Label>
+                <Input
+                  id="regEmail"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@clinic.com"
+                  className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="regPassword"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Password
+                </Label>
+                <Input
+                  id="regPassword"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-14 w-full rounded-2xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 text-base font-semibold text-white shadow-md hover:opacity-90 disabled:opacity-60"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  {isSubmitting ? "Creating account..." : "Create account"}
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </Button>
+            </form>
+          )}
+
+          <p className="text-center text-sm text-slate-600">
+            {mode === "login" ? (
+              <>
+                Don't have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => switchMode("register")}
+                  className="font-semibold text-teal-700 hover:underline"
+                >
+                  Sign up
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => switchMode("login")}
+                  className="font-semibold text-teal-700 hover:underline"
+                >
+                  Sign in
+                </button>
+              </>
+            )}
+          </p>
         </div>
       </div>
     </div>
