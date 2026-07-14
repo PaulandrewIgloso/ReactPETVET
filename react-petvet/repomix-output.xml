@@ -101,8 +101,10 @@ src/features/vaccinations/Vaccinationspage.tsx
 src/index.css
 src/lib/utils.ts
 src/main.tsx
-src/services/api.ts
-src/services/auth.tsx
+src/services/apiConnection/api.ts
+src/services/auth/auth.dtos.ts
+src/services/auth/auth.service.ts
+src/services/auth/auth.types.ts
 tsconfig.app.json
 tsconfig.json
 tsconfig.node.json
@@ -1034,8 +1036,8 @@ export default defineConfig([
 </file>
 
 <file path="src/App.tsx">
+import { AuthProvider, useAuth } from './services/auth/auth.service'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './services/auth'
 import { LoginForm } from './components/layout/auth/LoginForm'
 import DashboardPage from './features/dashboard/Dashboardpage'
 import PetProfilesPage from './features/pets/PetProfilespage'
@@ -1109,16 +1111,17 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, PawPrint } from "lucide-react"
 import catHero from "@/assets/CatDog.jpg"
-import { api } from "@/services/api"
-import { useAuth } from "@/services/auth"
+import { useAuth } from "@/services/auth/auth.service"
+import { SELF_REGISTER_ROLE_ID } from "@/services/auth/auth.types"
 
 type Mode = "login" | "register"
 
 export function LoginForm() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, register } = useAuth()
 
   const [mode, setMode] = useState<Mode>("login")
+  const [username, setUsername] = useState("")
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -1150,15 +1153,21 @@ export function LoginForm() {
     setError("")
     setIsSubmitting(true)
     try {
-      await api.post("/api/auth/register", {
-        fullName: fullName.trim(),
+      const [firstName, ...rest] = fullName.trim().split(/\s+/)
+      const lastName = rest.join(" ")
+
+      await register({
+        username: username.trim(),
         email: email.trim(),
         password,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        roleID: SELF_REGISTER_ROLE_ID, // always PetOwner — not user-selectable
       })
       // Registration succeeded — drop them back into the login fields, pre-filled.
-      switchMode("login") 
+      switchMode("login")
     } catch {
-      setError("Could not create account. That email may already be registered.")
+      setError("Could not create account. That email or username may already be registered.")
     } finally {
       setIsSubmitting(false)
     }
@@ -1271,6 +1280,24 @@ export function LoginForm() {
             <form onSubmit={handleCreateAccount} className="space-y-5">
               <div className="space-y-2">
                 <Label
+                  htmlFor="username"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. jsmith"
+                  className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
                   htmlFor="fullName"
                   className="text-xs font-semibold uppercase tracking-wide text-slate-500"
                 >
@@ -1370,7 +1397,7 @@ export function LoginForm() {
 
 <file path="src/components/layout/Sidebar.tsx">
 import { Link, useLocation } from "react-router-dom"
-import { useAuth } from "@/services/auth"
+import { useAuth } from "@/services/auth/auth.service"
 import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut,} from "lucide-react"
 
 const navItems = [
@@ -1436,7 +1463,7 @@ export function Sidebar() {
             </div>
           </div>
         </div>
-        <button onClick={logout} className="...">
+        <button onClick={logout} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
           <LogOut className="h-4 w-4" />
           Sign out
         </button>
@@ -3863,10 +3890,8 @@ createRoot(document.getElementById('root')!).render(
 )
 </file>
 
-<file path="src/services/api.ts">
-// The environment variable name follows the Vite convention used in the README.
-// Fallback to the default local development URL if the variable is missing.
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5165"
+<file path="src/services/apiConnection/api.ts">
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://localhost:7090/api"
 
 function getToken() {
   return localStorage.getItem("token")
@@ -3941,48 +3966,62 @@ export const api = {
 }
 </file>
 
-<file path="src/services/auth.tsx">
-import { createContext, useContext, useState } from "react"
-import type { ReactNode } from "react"
-import { api } from "./api"
-
-export type User = {
-  id: number
-  fullName: string
+<file path="src/services/auth/auth.dtos.ts">
+export interface LoginDto {
   email: string
-  role: string
+  password: string
 }
 
-type LoginResponse = {
+export interface AuthResponseDto {
   token: string
-  user: User
+  expiresAt: string
+  userID: number
+  username: string
+  email: string
+  roleName: string | null
 }
 
-type AuthContextType = {
-  user: User | null
-  token: string | null
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
+export interface UserCreateDto {
+  username: string
+  email: string
+  password: string
+  lastName?: string
+  firstName?: string
+  phone?: string
+  roleID: number
+  isActive?: boolean
 }
+</file>
+
+<file path="src/services/auth/auth.service.ts">
+import { createContext, useContext, useState, createElement } from "react"
+import { api } from "../apiConnection/api"
+import type { LoginDto, AuthResponseDto, UserCreateDto } from "./auth.dtos"
+import type { AuthContextType, AuthProviderProps, User } from "./auth.types"
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function mapAuthResponseToUser(dto: AuthResponseDto): User {
+  return { id: dto.userID, username: dto.username, email: dto.email, role: dto.roleName }
+}
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem("token") ?? null
   )
 
   const login = async (email: string, password: string) => {
-    const data = await api.post<LoginResponse>("/api/auth/login", {
-      email,
-      password,
-    })
+    const payload: LoginDto = { email, password }
+    const data = await api.post<AuthResponseDto>("/Auth/login", payload)
     setToken(data.token)
-    setUser(data.user)
-    localStorage.setItem("token", data.token)
-  }
+    setUser(mapAuthResponseToUser(data))
+  localStorage.setItem("token", data.token)
+    }
+
+const register = async (payload: UserCreateDto) => {
+  await api.post<AuthResponseDto>("/Auth/register", payload)
+    }
 
   const logout = () => {
     setToken(null)
@@ -3991,21 +4030,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = "/login"
   }
 
-  return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  return createElement(
+    AuthContext.Provider,
+    { value: { user, token, login, register, logout } },
+    children
   )
 }
 
-/** Hook to access authentication helpers inside components. */
 export const useAuth = () => {
   const ctx = useContext(AuthContext)
-  if (!ctx) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider")
   return ctx
 }
+</file>
+
+<file path="src/services/auth/auth.types.ts">
+import type { ReactNode } from "react"
+import type { UserCreateDto } from "./auth.dtos"
+
+export type User = {
+  id: number
+  username: string
+  email: string
+  role: string | null
+}
+
+export type AuthContextType = {
+  user: User | null
+  token: string | null
+  login: (email: string, password: string) => Promise<void>
+  register: (payload: UserCreateDto) => Promise<void>
+  logout: () => void
+}
+
+export type AuthProviderProps = { children: ReactNode }
+
+export const SELF_REGISTER_ROLE_ID = 2
 </file>
 
 <file path="tsconfig.app.json">

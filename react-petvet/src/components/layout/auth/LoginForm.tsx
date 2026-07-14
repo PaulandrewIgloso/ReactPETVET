@@ -5,16 +5,17 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, PawPrint } from "lucide-react"
 import catHero from "@/assets/CatDog.jpg"
-import { api } from "@/services/api"
-import { useAuth } from "@/services/auth"
+import { useAuth } from "@/services/auth/auth.service"
+import { SELF_REGISTER_ROLE_ID } from "@/services/auth/auth.types"
 
 type Mode = "login" | "register"
 
 export function LoginForm() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, register } = useAuth()
 
   const [mode, setMode] = useState<Mode>("login")
+  const [username, setUsername] = useState("")
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -46,15 +47,21 @@ export function LoginForm() {
     setError("")
     setIsSubmitting(true)
     try {
-      await api.post("/api/Auth/register", {
-        fullName: fullName.trim(),
+      const [firstName, ...rest] = fullName.trim().split(/\s+/)
+      const lastName = rest.join(" ")
+
+      await register({
+        username: username.trim(),
         email: email.trim(),
         password,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        roleID: SELF_REGISTER_ROLE_ID, // always PetOwner — not user-selectable
       })
       // Registration succeeded — drop them back into the login fields, pre-filled.
-      switchMode("login") 
+      switchMode("login")
     } catch {
-      setError("Could not create account. That email may already be registered.")
+      setError("Could not create account. That email or username may already be registered.")
     } finally {
       setIsSubmitting(false)
     }
@@ -165,6 +172,24 @@ export function LoginForm() {
             </form>
           ) : (
             <form onSubmit={handleCreateAccount} className="space-y-5">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="username"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                >
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. jsmith"
+                  className="h-14 rounded-2xl border-0 bg-white px-5 text-base shadow-sm ring-0 focus-visible:ring-2 focus-visible:ring-teal-500/40"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label
                   htmlFor="fullName"

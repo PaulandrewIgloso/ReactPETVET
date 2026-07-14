@@ -1,5 +1,5 @@
+import { AuthProvider, useAuth } from './services/auth/auth.service'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './services/auth'
 import { LoginForm } from './components/layout/auth/LoginForm'
 import DashboardPage from './features/dashboard/Dashboardpage'
 import PetProfilesPage from './features/pets/PetProfilespage'

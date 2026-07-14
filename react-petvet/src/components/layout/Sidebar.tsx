@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { useAuth } from "@/services/auth"
+import { useAuth } from "@/services/auth/auth.service"
 import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut,} from "lucide-react"
 
 const navItems = [
