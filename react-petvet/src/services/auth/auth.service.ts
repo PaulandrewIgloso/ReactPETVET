@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, createElement } from "react"
-import { useNavigate } from "react-router-dom"
 import { api } from "../apiConnection/api"
 import type { LoginDto, AuthResponseDto, UserCreateDto } from "./auth.dtos"
 import type { AuthContextType, AuthProviderProps, User } from "./auth.types"
@@ -15,8 +14,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem("token") ?? null
   )
-
-  const navigate = useNavigate()
 
   const login = async (email: string, password: string) => {
     const payload: LoginDto = { email, password }
@@ -34,7 +31,7 @@ const register = async (payload: UserCreateDto) => {
     setToken(null)
     setUser(null)
     localStorage.removeItem("token")
-    navigate("/login", { replace: true })
+    window.location.href = "/login"
   }
 
   return createElement(
