@@ -144,6 +144,7 @@ dist-ssr
 
 .env
 .env.local
+.env.Production
 </file>
 
 <file path="components.json">
@@ -573,6 +574,7 @@ export default defineConfig([
     "@base-ui/react": "^1.6.0",
     "@fontsource-variable/geist": "^5.2.9",
     "@tailwindcss/vite": "^4.3.2",
+    "axios": "^1.18.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.23.0",
@@ -3891,78 +3893,63 @@ createRoot(document.getElementById('root')!).render(
 </file>
 
 <file path="src/services/apiConnection/api.ts">
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://localhost:7090/api"
+import axios, { type AxiosError } from "axios"
 
-function getToken() {
-  return localStorage.getItem("token")
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: { "Content-Type": "application/json" },
+})
+
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token")
+  if (token) {
+    config.headers = config.headers ?? {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+export interface NormalizedApiError {
+  status: number
+  message: string
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getToken()
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<{ error?: string; message?: string }>) => {
+    const status = error.response?.status ?? 0
+    const message =
+      error.response?.data?.error ??
+      error.response?.data?.message ??
+      error.message ??
+      "Something went wrong. Please try again."
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  })
+    if (status === 401) {
+      localStorage.removeItem("token")
+      window.location.href = "/login"
+    }
 
-  if (res.status === 401) {
-    localStorage.removeItem("token")
-    window.location.href = "/login"
-    throw new Error("Unauthorized")
+    return Promise.reject({ status, message } satisfies NormalizedApiError)
   }
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "")
-    throw new Error(`API error ${res.status}: ${body}`)
-  }
-
-  if (res.status === 204) return undefined as unknown as T
-  return res.json()
-}
-
-async function requestForm<T>(path: string, formData: FormData): Promise<T> {
-  const token = getToken()
-
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: "POST",
-    body: formData,
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  })
-
-  if (res.status === 401) {
-    localStorage.removeItem("token")
-    window.location.href = "/login"
-    throw new Error("Unauthorized")
-  }
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "")
-    throw new Error(`API error ${res.status}: ${body}`)
-  }
-
-  if (res.status === 204) return undefined as unknown as T
-  return res.json()
-}
+)
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string) =>
+    apiClient.get<T>(path).then((res) => res.data),
   post: <T>(path: string, data: unknown) =>
-    request<T>(path, { method: "POST", body: JSON.stringify(data) }),
+    apiClient.post<T>(path, data).then((res) => res.data),
   put: <T>(path: string, data: unknown) =>
-    request<T>(path, { method: "PUT", body: JSON.stringify(data) }),
+    apiClient.put<T>(path, data).then((res) => res.data),
   patch: <T>(path: string, data: unknown) =>
-    request<T>(path, { method: "PATCH", body: JSON.stringify(data) }),
-  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
-  postForm: <T>(path: string, formData: FormData) => requestForm<T>(path, formData),
+    apiClient.patch<T>(path, data).then((res) => res.data),
+  delete: <T>(path: string) =>
+    apiClient.delete<T>(path).then((res) => res.data),
+  postForm: <T>(path: string, formData: FormData) =>
+    apiClient
+      .post<T>(path, formData, { headers: { "Content-Type": "multipart/form-data" } })
+      .then((res) => res.data),
 }
 </file>
 
