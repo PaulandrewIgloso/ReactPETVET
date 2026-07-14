@@ -46,7 +46,7 @@ export function LoginForm() {
     setError("")
     setIsSubmitting(true)
     try {
-      await api.post("/api/auth/register", {
+      await api.post("/api/Auth/register", {
         fullName: fullName.trim(),
         email: email.trim(),
         password,
