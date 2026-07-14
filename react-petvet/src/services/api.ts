@@ -1,6 +1,4 @@
-// The environment variable name follows the Vite convention used in the README.
-// Fallback to the default local development URL if the variable is missing.
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5165"
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5165"
 
 function getToken() {
   return localStorage.getItem("token")
