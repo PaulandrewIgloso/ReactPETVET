@@ -108,6 +108,7 @@ src/services/auth/auth.types.ts
 tsconfig.app.json
 tsconfig.json
 tsconfig.node.json
+vercel.json
 vite.config.d.ts
 vite.config.js
 vite.config.ts
@@ -4115,6 +4116,12 @@ export const SELF_REGISTER_ROLE_ID = 2
     "noFallthroughCasesInSwitch": true
   },
   "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="vercel.json">
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
 </file>
 
