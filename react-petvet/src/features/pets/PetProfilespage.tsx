@@ -1,48 +1,12 @@
 import { useEffect, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Search, Plus, X } from "lucide-react"
-import { api } from "@/services/apiConnection/api"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto, PetCreateDto } from "@/services/pets/pets.dtos"
+import { usersService } from "@/services/users/users.service"
+import type { UserReadDto } from "@/services/users/users.dtos"
 
-// ---- Types matching the backend DTOs exactly ----
-
-interface PetReadDto {
-  petID: number
-  name: string
-  breed: string | null
-  species: string
-  dateOfBirth: string | null // "YYYY-MM-DD" or null
-  gender: string | null // "M" | "F" | "N" | null
-  color: string | null
-  microchipID: string | null
-  photoPath: string | null
-  ownerUserID: number
-  ownerName: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-interface PetCreateDto {
-  name: string
-  breed?: string
-  species: string
-  dateOfBirth?: string | null
-  gender?: string | null
-  color?: string
-  microchipID?: string
-  ownerUserID: number
-}
-
-interface UserReadDto {
-  userID: number
-  username: string
-  email: string
-  lastName: string | null
-  firstName: string | null
-  roleName: string | null
-}
-
-// ---- Local display helpers ----
-
+// ---- Local display helpers (unchanged) ----
 const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
 
 function colorForId(id: number) {
@@ -106,8 +70,8 @@ export default function PetProfilesPage() {
       setLoadError("")
       try {
         const [petsData, usersData] = await Promise.all([
-          api.get<PetReadDto[]>("/api/Pets/GetAll"),
-          api.get<UserReadDto[]>("/api/Users/GetAll"),
+          petsService.getAll(),
+          usersService.getAll(),
         ])
         if (!cancelled) {
           setPets(petsData)
@@ -158,7 +122,7 @@ export default function PetProfilesPage() {
         microchipID: form.microchipID.trim() || undefined,
         ownerUserID: Number(form.ownerUserID),
       }
-      const created = await api.post<PetReadDto>("/api/Pets/Create", payload)
+      const created = await petsService.create(payload)
       setPets((prev) => [created, ...prev])
       closeModal()
     } catch (err) {
@@ -174,14 +138,6 @@ export default function PetProfilesPage() {
 
   return (
     <AppShell>
-      {/* Header */}
-      <div className="flex items-center justify-between border-b bg-white px-8 py-5">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Pet Profiles</h1>
-          <p className="text-sm text-slate-500">Manage and view all registered pets</p>
-        </div>
-      </div>
-
       <div className="space-y-6 p-8">
         {/* Search + Add */}
         <div className="flex items-center gap-3">

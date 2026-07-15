@@ -10,9 +10,19 @@ import DocumentsPage from './features/documents/Documentspage'
 import UserAccountsPage from './features/users/UserAccountspage'
 import './App.css'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth()
-  return token ? <>{children}</> : <Navigate to="/login" replace />
+function ProtectedRoute({ children, requiredRole }: { 
+  children: React.ReactNode 
+  requiredRole?: "Admin" | "PetOwner" 
+}) {
+  const { token, isAdmin } = useAuth()
+
+  if (!token) return <Navigate to="/login" replace />
+
+  if (requiredRole === "Admin" && !isAdmin) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <>{children}</>
 }
 
 function AppRoutes() {
@@ -25,8 +35,15 @@ function AppRoutes() {
       <Route path="/vaccinations" element={<ProtectedRoute><VaccinationsPage /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
-      <Route path="/users" element={<ProtectedRoute><UserAccountsPage /></ProtectedRoute>} />
-      <Route path="/" element={<LoginForm />} />
+      
+      {/* Admin Only */}
+      <Route path="/users" element={
+        <ProtectedRoute requiredRole="Admin">
+          <UserAccountsPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }

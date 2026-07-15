@@ -8,24 +8,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 function mapAuthResponseToUser(dto: AuthResponseDto): User {
   return { id: dto.userID, username: dto.username, email: dto.email, role: dto.roleName }
 }
+const isAdmin = (role: string | null) => role?.toLowerCase() === "admin"
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(
-    () => localStorage.getItem("token") ?? null
-  )
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token") ?? null)
+
+  const isAdminUser = isAdmin(user?.role ?? null)
 
   const login = async (email: string, password: string) => {
     const payload: LoginDto = { email, password }
-    const data = await api.post<AuthResponseDto>("/Auth/login", payload)
+    const data = await api.post<AuthResponseDto>("/api/Auth/login", payload)
     setToken(data.token)
     setUser(mapAuthResponseToUser(data))
-  localStorage.setItem("token", data.token)
-    }
+    localStorage.setItem("token", data.token)
+  }
 
-const register = async (payload: UserCreateDto) => {
-  await api.post<AuthResponseDto>("/Auth/register", payload)
-    }
+  const register = async (payload: UserCreateDto) => {
+    await api.post<AuthResponseDto>("/api/Auth/register", payload)
+  }
 
   const logout = () => {
     setToken(null)
@@ -36,7 +37,17 @@ const register = async (payload: UserCreateDto) => {
 
   return createElement(
     AuthContext.Provider,
-    { value: { user, token, login, register, logout } },
+    {
+      value: {
+        user,
+        token,
+        login,
+        register,
+        logout,
+        isAdmin: isAdminUser,
+        isOwner: !isAdminUser,
+      },
+    },
     children
   )
 }

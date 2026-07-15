@@ -14,6 +14,8 @@ export type AuthContextType = {
   login: (email: string, password: string) => Promise<void>
   register: (payload: UserCreateDto) => Promise<void>
   logout: () => void
+  isAdmin: boolean
+  isOwner: boolean
 }
 
 export type AuthProviderProps = { children: ReactNode }
