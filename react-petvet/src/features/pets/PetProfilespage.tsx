@@ -5,6 +5,8 @@ import { petsService } from "@/services/pets/pets.service"
 import type { PetReadDto, PetCreateDto } from "@/services/pets/pets.dtos"
 import { usersService } from "@/services/users/users.service"
 import type { UserReadDto } from "@/services/users/users.dtos"
+import { useAuth } from "@/services/auth/auth.service"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 
 // ---- Local display helpers (unchanged) ----
 const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
@@ -53,11 +55,13 @@ const emptyForm = {
 }
 
 export default function PetProfilesPage() {
+  const { isAdmin } = useAuth()
   const [pets, setPets] = useState<PetReadDto[]>([])
   const [users, setUsers] = useState<UserReadDto[]>([])
   const [query, setQuery] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [photo, setPhoto] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState("")
   const [saveError, setSaveError] = useState("")
@@ -69,13 +73,15 @@ export default function PetProfilesPage() {
       setIsLoading(true)
       setLoadError("")
       try {
-        const [petsData, usersData] = await Promise.all([
-          petsService.getAll(),
-          usersService.getAll(),
-        ])
-        if (!cancelled) {
-          setPets(petsData)
-          setUsers(usersData)
+        const petsData = await petsService.getAll()
+        if (!cancelled) setPets(petsData)
+
+        // Owner list is only needed for Admin's "Owner" picker; PetOwner may not have access to it.
+        try {
+          const usersData = await usersService.getAll()
+          if (!cancelled) setUsers(usersData)
+        } catch {
+          if (!cancelled) setUsers([])
         }
       } catch (err) {
         if (!cancelled) {
@@ -102,12 +108,14 @@ export default function PetProfilesPage() {
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
+    setPhoto(null)
     setSaveError("")
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.ownerUserID) return
+    if (!form.name.trim()) return
+    if (isAdmin && !form.ownerUserID) return
 
     setIsSaving(true)
     setSaveError("")
@@ -120,9 +128,9 @@ export default function PetProfilesPage() {
         gender: form.gender || null,
         color: form.color.trim() || undefined,
         microchipID: form.microchipID.trim() || undefined,
-        ownerUserID: Number(form.ownerUserID),
+        ownerUserID: isAdmin ? Number(form.ownerUserID) : undefined,
       }
-      const created = await petsService.create(payload)
+      const created = await petsService.create(payload, photo)
       setPets((prev) => [created, ...prev])
       closeModal()
     } catch (err) {
@@ -165,11 +173,6 @@ export default function PetProfilesPage() {
         {loadError && !isLoading && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {loadError}
-            {loadError.includes("403") && (
-              <span className="block mt-1 text-red-600">
-                This usually means your logged-in account doesn't have the "Admin" role required by this endpoint.
-              </span>
-            )}
           </div>
         )}
 
@@ -180,7 +183,11 @@ export default function PetProfilesPage() {
               <div key={pet.petID} className="rounded-2xl border bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`h-11 w-11 shrink-0 rounded-full ${colorForId(pet.petID)}`} />
+                    <PetAvatar
+                      petID={pet.petID}
+                      hasPhoto={!!pet.photoPath}
+                      colorClassName={colorForId(pet.petID)}
+                    />
                     <div>
                       <div className="font-semibold text-slate-900">{pet.name}</div>
                       <div className="text-xs text-teal-600">{pet.breed || "Unknown breed"}</div>
@@ -341,23 +348,38 @@ export default function PetProfilesPage() {
                 </div>
               </div>
 
+              {isAdmin && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Owner
+                  </label>
+                  <select
+                    required
+                    value={form.ownerUserID}
+                    onChange={(e) => setForm({ ...form, ownerUserID: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Select owner —</option>
+                    {users.map((u) => (
+                      <option key={u.userID} value={u.userID}>
+                        {ownerDisplayName(u)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Owner
+                  Photo
                 </label>
-                <select
-                  required
-                  value={form.ownerUserID}
-                  onChange={(e) => setForm({ ...form, ownerUserID: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  <option value="">— Select owner —</option>
-                  {users.map((u) => (
-                    <option key={u.userID} value={u.userID}>
-                      {ownerDisplayName(u)}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+                  className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
+                />
+                {photo && <p className="text-xs text-slate-500">{photo.name}</p>}
               </div>
 
               <div className="flex gap-3 pt-2">

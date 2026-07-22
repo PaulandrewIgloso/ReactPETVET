@@ -54,6 +54,8 @@ export const api = {
     apiClient.delete<T>(path).then((res) => res.data),
   postForm: <T>(path: string, formData: FormData) =>
     apiClient
-      .post<T>(path, formData, { headers: { "Content-Type": "multipart/form-data" } })
-      .then((res) => res.data),
+    .post<T>(path, formData, { headers: { "Content-Type": undefined } })
+    .then((res) => res.data),
+  getBlob: (path: string) =>
+    apiClient.get(path, { responseType: "blob" }).then((res) => res.data as Blob),
 }

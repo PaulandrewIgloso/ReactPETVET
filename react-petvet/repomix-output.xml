@@ -86,13 +86,13 @@ src/components/layout/Sidebar.tsx
 src/components/shared/logo.d.ts
 src/components/shared/logo.js
 src/components/shared/logo.tsx
+src/components/shared/PetAvatar.tsx
 src/components/ui/alert.tsx
 src/components/ui/button.tsx
 src/components/ui/card.tsx
 src/components/ui/input.tsx
 src/components/ui/label.tsx
 src/features/appointments/Appointmentspage.tsx
-src/features/dashboard/AdminDashboard.tsx
 src/features/dashboard/Dashboardpage.tsx
 src/features/dashboard/OwnerDashboard.tsx
 src/features/documents/Documentspage.tsx
@@ -104,9 +104,23 @@ src/index.css
 src/lib/utils.ts
 src/main.tsx
 src/services/apiConnection/api.ts
+src/services/appointments/appointments.dtos.ts
+src/services/appointments/appointments.service.ts
 src/services/auth/auth.dtos.ts
 src/services/auth/auth.service.ts
 src/services/auth/auth.types.ts
+src/services/documents/documents.dtos.ts
+src/services/documents/documents.service.ts
+src/services/medicalRecords/medicalRecords.dtos.ts
+src/services/medicalRecords/medicalRecords.service.ts
+src/services/pets/pets.dtos.ts
+src/services/pets/pets.service.ts
+src/services/roles/roles.dtos.ts
+src/services/roles/roles.service.ts
+src/services/users/users.dtos.ts
+src/services/users/users.service.ts
+src/services/vaccinations/vaccinations.dtos.ts
+src/services/vaccinations/vaccinations.service.ts
 tsconfig.app.json
 tsconfig.json
 tsconfig.node.json
@@ -147,7 +161,7 @@ dist-ssr
 
 .env
 .env.local
-.env.Production
+.env.production
 </file>
 
 <file path="components.json">
@@ -1045,6 +1059,7 @@ import { AuthProvider, useAuth } from './services/auth/auth.service'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginForm } from './components/layout/auth/LoginForm'
 import DashboardPage from './features/dashboard/Dashboardpage'
+import OwnerDashboard from './features/dashboard/OwnerDashboard'
 import PetProfilesPage from './features/pets/PetProfilespage'
 import MedicalRecordsPage from './features/records/MedicalRecordspage'
 import VaccinationsPage from './features/vaccinations/Vaccinationspage'
@@ -1053,41 +1068,44 @@ import DocumentsPage from './features/documents/Documentspage'
 import UserAccountsPage from './features/users/UserAccountspage'
 import './App.css'
 
-function ProtectedRoute({ children, requiredRole }: { 
-  children: React.ReactNode 
-  requiredRole?: "Admin" | "PetOwner" 
+function ProtectedRoute({ children, requiredRole }: {
+  children: React.ReactNode
+  requiredRole?: "Admin" | "PetOwner"
 }) {
   const { token, isAdmin } = useAuth()
-
   if (!token) return <Navigate to="/login" replace />
-
-  if (requiredRole === "Admin" && !isAdmin) {
-    return <Navigate to="/dashboard" replace />
-  }
-
+  if (requiredRole === "Admin" && !isAdmin) return <Navigate to="/dashboard" replace />
   return <>{children}</>
+}
+
+function DashboardRouter() {
+  const { isAdmin } = useAuth()
+  return isAdmin ? <DashboardPage /> : <OwnerDashboard />
 }
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginForm />} />
-      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/pets" element={<ProtectedRoute><PetProfilesPage /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
+      <Route path="/pets" element={<ProtectedRoute requiredRole="Admin"><PetProfilesPage /></ProtectedRoute>} />
       <Route path="/records" element={<ProtectedRoute><MedicalRecordsPage /></ProtectedRoute>} />
       <Route path="/vaccinations" element={<ProtectedRoute><VaccinationsPage /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
-      
-      {/* Admin Only */}
-      <Route path="/users" element={
-        <ProtectedRoute requiredRole="Admin">
-          <UserAccountspage />
-        </ProtectedRoute>
-      } />
-
+      <Route path="/users" element={<ProtectedRoute requiredRole="Admin"><UserAccountsPage /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 export default App
@@ -1410,7 +1428,7 @@ export function LoginForm() {
 <file path="src/components/layout/Sidebar.tsx">
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/services/auth/auth.service"
-import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut,} from "lucide-react"
+import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut } from "lucide-react"
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -1422,13 +1440,27 @@ const navItems = [
   { label: "User Accounts", icon: Users, href: "/users" },
 ]
 
+const adminOnlyPaths = new Set(["/pets", "/users"])
+
+const roleLabels: Record<string, string> = {
+  Admin: "Administrator",
+  PetOwner: "Pet Owner",
+}
+
+function getInitials(name: string) {
+  return name.slice(0, 2).toUpperCase()
+}
+
 export function Sidebar() {
   const location = useLocation()
-  const { logout } = useAuth()
+  const { logout, user, isAdmin } = useAuth()
+
+  const displayName = user?.username ?? "Guest"
+  const roleLabel = user?.role ? roleLabels[user.role] ?? user.role : "—"
+  const visibleNavItems = navItems.filter((item) => isAdmin || !adminOnlyPaths.has(item.href))
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 flex-col bg-slate-950 text-slate-300">
-      {/* Logo */}
       <div className="flex items-center gap-2 border-b border-white/10 px-5 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-green-500">
           <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
@@ -1439,9 +1471,8 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = item.href === location.pathname
           const Icon = item.icon
           return (
@@ -1461,17 +1492,16 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User footer */}
       <div className="border-t border-white/10 p-4">
         <div className="mb-2 flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
-            DS
+            {getInitials(displayName)}
           </div>
-          <div className="leading-tight">
-            <div className="text-sm font-semibold text-white">Dr. Sarah Reyes</div>
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-sm font-semibold text-white">{displayName}</div>
             <div className="flex items-center gap-1 text-xs text-emerald-400">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Administrator
+              {roleLabel}
             </div>
           </div>
         </div>
@@ -1519,6 +1549,59 @@ export function Logo({ className }: LogoProps) {
       </span>
     </div>
   )
+}
+</file>
+
+<file path="src/components/shared/PetAvatar.tsx">
+import { useEffect, useState } from "react"
+import { petsService } from "@/services/pets/pets.service"
+
+interface PetAvatarProps {
+  petID: number
+  hasPhoto: boolean
+  colorClassName: string
+  className?: string
+}
+
+export function PetAvatar({ petID, hasPhoto, colorClassName, className }: PetAvatarProps) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!hasPhoto) {
+      setObjectUrl(null)
+      return
+    }
+    let cancelled = false
+    let currentUrl: string | null = null
+
+    petsService
+      .getPhotoBlob(petID)
+      .then((blob) => {
+        if (cancelled) return
+        currentUrl = URL.createObjectURL(blob)
+        setObjectUrl(currentUrl)
+      })
+      .catch(() => {
+        if (!cancelled) setObjectUrl(null)
+      })
+
+    return () => {
+      cancelled = true
+      if (currentUrl) URL.revokeObjectURL(currentUrl)
+    }
+  }, [petID, hasPhoto])
+
+  if (objectUrl) {
+    return (
+      <img
+        src={objectUrl}
+        alt=""
+        className={className ?? "h-10 w-10 shrink-0 rounded-full object-cover"}
+      />
+    )
+  }
+
+  return <div className={className ?? `h-10 w-10 shrink-0 rounded-full ${colorClassName}`} />
 }
 </file>
 
@@ -1813,92 +1896,253 @@ export { Label }
 </file>
 
 <file path="src/features/appointments/Appointmentspage.tsx">
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
-import { Plus, X } from "lucide-react"
+import { Plus, X, CheckCircle, Ban, UserX } from "lucide-react"
+import { appointmentsService } from "@/services/appointments/appointments.service"
+import type { AppointmentReadDto, AppointmentCreateDto, AppointmentUpdateDto } from "@/services/appointments/appointments.dtos"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto, PetCreateDto } from "@/services/pets/pets.dtos"
+import { usersService } from "@/services/users/users.service"
+import type { UserReadDto } from "@/services/users/users.dtos"
+import { useAuth } from "@/services/auth/auth.service"
 
-interface Appointment {
-  id: string
-  pet: string
-  avatarColor: string
-  owner: string
-  reason: string
-  date: string // YYYY-MM-DD
-  time: string // e.g. "09:30"
-  vet: string
-  status: "Scheduled" | "Completed"
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
 }
 
-const initialAppointments: Appointment[] = [
-  { id: "1", pet: "Luna", avatarColor: "bg-orange-200", owner: "Carlos Mendez", reason: "Dermatitis follow-up", date: "2026-06-24", time: "09:30", vet: "Dr. Sarah Reyes", status: "Scheduled" },
-  { id: "2", pet: "Titan", avatarColor: "bg-amber-300", owner: "Carlos Mendez", reason: "Physiotherapy assessment", date: "2026-06-25", time: "14:00", vet: "Dr. James Park", status: "Scheduled" },
-  { id: "3", pet: "Bella", avatarColor: "bg-yellow-200", owner: "Maria Santos", reason: "Pre-surgical exam (spay)", date: "2026-07-08", time: "10:00", vet: "Dr. Sarah Reyes", status: "Scheduled" },
-  { id: "4", pet: "Mochi", avatarColor: "bg-slate-300", owner: "Ana Torres", reason: "URI follow-up check", date: "2026-06-10", time: "11:00", vet: "Dr. Sarah Reyes", status: "Completed" },
-  { id: "5", pet: "Neko", avatarColor: "bg-slate-500", owner: "Ana Torres", reason: "Annual wellness exam", date: "2026-06-18", time: "15:30", vet: "Dr. James Park", status: "Completed" },
-  { id: "6", pet: "Luna", avatarColor: "bg-orange-200", owner: "Carlos Mendez", reason: "Initial dermatitis consult", date: "2026-06-10", time: "09:00", vet: "Dr. Sarah Reyes", status: "Completed" },
-]
-
-const petOptions = [
-  { name: "Luna", avatarColor: "bg-orange-200", owner: "Carlos Mendez" },
-  { name: "Mochi", avatarColor: "bg-slate-300", owner: "Ana Torres" },
-  { name: "Titan", avatarColor: "bg-amber-300", owner: "Carlos Mendez" },
-  { name: "Bella", avatarColor: "bg-yellow-200", owner: "Maria Santos" },
-  { name: "Neko", avatarColor: "bg-slate-500", owner: "Ana Torres" },
-]
-const vetOptions = ["Dr. Sarah Reyes", "Dr. James Park"]
-
-const emptyForm = {
-  pet: "",
-  date: "",
-  time: "09:00",
-  reason: "",
-  vet: vetOptions[0],
+function userDisplayName(user: UserReadDto): string {
+  const full = [user.firstName, user.lastName].filter(Boolean).join(" ")
+  return full || user.username
 }
 
-function formatDateBox(dateStr: string) {
-  const d = new Date(dateStr + "T00:00:00")
+function formatDateBox(iso: string) {
+  const d = new Date(iso)
   return {
     day: d.toLocaleDateString("en-US", { day: "2-digit" }),
     month: d.toLocaleDateString("en-US", { month: "short" }),
   }
 }
 
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+}
+
+const emptyForm = {
+  petID: "",
+  date: "",
+  time: "09:00",
+  reason: "",
+}
+
+const emptyNewPetForm = {
+  name: "",
+  species: "Dog",
+  breed: "",
+  dateOfBirth: "",
+  gender: "M",
+  color: "",
+  microchipID: "",
+  ownerUserID: "",
+}
+
 export default function AppointmentsPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments)
-  const [activeTab, setActiveTab] = useState<"Scheduled" | "Completed">("Scheduled")
+  const { isAdmin } = useAuth()
+
+  const [appointments, setAppointments] = useState<AppointmentReadDto[]>([])
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [users, setUsers] = useState<UserReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
+  const [activeTab, setActiveTab] = useState<"Scheduled" | "Completed" | "Cancelled" | "NoShow">("Scheduled")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
+  const [updatingId, setUpdatingId] = useState<number | null>(null)
+
+  const [isAddingNewPet, setIsAddingNewPet] = useState(false)
+  const [newPetForm, setNewPetForm] = useState(emptyNewPetForm)
+  const [newPetPhoto, setNewPetPhoto] = useState<File | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [appointmentsData, petsData] = await Promise.all([
+          appointmentsService.getAll(),
+          petsService.getAll(),
+        ])
+        if (!cancelled) {
+          setAppointments(appointmentsData)
+          setPets(petsData)
+        }
+        // Vet list is only needed to populate the "assign a vet" dropdown;
+        // PetOwner may not have access to it, so don't let that block the page.
+        try {
+          const usersData = await usersService.getAll()
+          if (!cancelled) setUsers(usersData)
+        } catch {
+          if (!cancelled) setUsers([])
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load appointments."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const ownerNameByPetId = useMemo(() => {
+    const map = new Map<number, string>()
+    pets.forEach((p) => map.set(p.petID, p.ownerName ?? "—"))
+    return map
+  }, [pets])
+
+  const veterinarianOptions = useMemo(
+    () => users.filter((u) => u.roleName === "Admin"),
+    [users]
+  )
+
+  const ownerOptions = useMemo(
+    () => users.filter((u) => u.roleName === "PetOwner"),
+    [users]
+  )
 
   const visibleAppointments = appointments
     .filter((a) => a.status === activeTab)
-    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+    .sort((a, b) => a.appointmentDateTime.localeCompare(b.appointmentDateTime))
 
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
+    setSaveError("")
+    setIsAddingNewPet(false)
+    setNewPetForm(emptyNewPetForm)
+    setNewPetPhoto(null)
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.pet || !form.date || !form.time || !form.vet) return
 
-    const petMatch = petOptions.find((p) => p.name === form.pet)
-
-    const newAppointment: Appointment = {
-      id: crypto.randomUUID(),
-      pet: form.pet,
-      avatarColor: petMatch?.avatarColor ?? "bg-slate-300",
-      owner: petMatch?.owner ?? "—",
-      reason: form.reason.trim() || "General visit",
-      date: form.date,
-      time: form.time,
-      vet: form.vet,
-      status: "Scheduled",
+    if (isAddingNewPet) {
+      if (!newPetForm.name.trim() || !form.date || !form.time) return
+      if (isAdmin && !newPetForm.ownerUserID) return
+    } else {
+      if (!form.petID || !form.date || !form.time) return
     }
 
-    setAppointments((prev) => [...prev, newAppointment])
-    setActiveTab("Scheduled")
-    closeModal()
+    setIsSaving(true)
+    setSaveError("")
+    try {
+      let petID = form.petID ? Number(form.petID) : null
+
+      if (isAddingNewPet) {
+        const petPayload: PetCreateDto = {
+          name: newPetForm.name.trim(),
+          species: newPetForm.species,
+          breed: newPetForm.breed.trim() || undefined,
+          dateOfBirth: newPetForm.dateOfBirth || null,
+          gender: newPetForm.gender || null,
+          color: newPetForm.color.trim() || undefined,
+          microchipID: newPetForm.microchipID.trim() || undefined,
+          ownerUserID: isAdmin ? Number(newPetForm.ownerUserID) : undefined,
+        }
+        const newPet = await petsService.create(petPayload, newPetPhoto)
+        setPets((prev) => [newPet, ...prev])
+        petID = newPet.petID
+      }
+
+      if (!petID) return
+
+      const payload: AppointmentCreateDto = {
+        petID,
+        appointmentDateTime: `${form.date}T${form.time}:00`,
+        reason: form.reason.trim() || undefined,
+      }
+      const created = await appointmentsService.create(payload)
+      setAppointments((prev) => [...prev, created])
+      setActiveTab("Scheduled")
+      closeModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : isAddingNewPet
+          ? "Could not save the new pet."
+          : "Could not book appointment."
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleUpdateStatus = async (
+    a: AppointmentReadDto,
+    status: AppointmentUpdateDto["status"]
+  ) => {
+    setUpdatingId(a.appointmentID)
+    try {
+      const payload: AppointmentUpdateDto = {
+        appointmentDateTime: a.appointmentDateTime,
+        reason: a.reason ?? undefined,
+        status,
+        veterinarianUserID: a.veterinarianUserID,
+        notes: a.notes ?? undefined,
+      }
+      const updated = await appointmentsService.update(a.appointmentID, payload)
+      setAppointments((prev) =>
+        prev.map((item) => (item.appointmentID === updated.appointmentID ? updated : item))
+      )
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not update appointment."
+      alert(message)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handleAssignVeterinarian = async (a: AppointmentReadDto, veterinarianUserID: number | null) => {
+    setUpdatingId(a.appointmentID)
+    try {
+      const payload: AppointmentUpdateDto = {
+        appointmentDateTime: a.appointmentDateTime,
+        reason: a.reason ?? undefined,
+        status: a.status,
+        veterinarianUserID,
+        notes: a.notes ?? undefined,
+      }
+      const updated = await appointmentsService.update(a.appointmentID, payload)
+      setAppointments((prev) =>
+        prev.map((item) => (item.appointmentID === updated.appointmentID ? updated : item))
+      )
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not assign veterinarian."
+      alert(message)
+    } finally {
+      setUpdatingId(null)
+    }
   }
 
   return (
@@ -1907,7 +2151,7 @@ export default function AppointmentsPage() {
         {/* Tabs + Book button */}
         <div className="flex items-center justify-between">
           <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-1">
-            {(["Scheduled", "Completed"] as const).map((tab) => (
+            {(["Scheduled", "Completed", "Cancelled", "NoShow"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -1917,7 +2161,7 @@ export default function AppointmentsPage() {
                     : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                {tab}
+                {tab === "NoShow" ? "No-Show" : tab}
               </button>
             ))}
           </div>
@@ -1930,54 +2174,115 @@ export default function AppointmentsPage() {
           </button>
         </div>
 
-        {/* Appointment cards */}
-        <div className="space-y-3">
-          {visibleAppointments.map((a) => {
-            const { day, month } = formatDateBox(a.date)
-            return (
-              <div
-                key={a.id}
-                className="flex items-center justify-between rounded-2xl border bg-white px-5 py-4 shadow-sm"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-teal-50 py-1.5">
-                    <span className="text-lg font-bold leading-tight text-teal-700">{day}</span>
-                    <span className="text-xs font-medium uppercase text-teal-500">{month}</span>
-                  </div>
-                  <div className={`h-10 w-10 shrink-0 rounded-full ${a.avatarColor}`} />
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      {a.pet} <span className="font-normal text-slate-400">—</span>{" "}
-                      <span className="font-normal text-teal-600">{a.owner}</span>
-                    </div>
-                    <div className="text-xs text-slate-500">{a.reason}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-slate-900">{a.time}</div>
-                    <div className="text-xs text-teal-600">{a.vet}</div>
-                  </div>
-                  <span
-                    className={`rounded-md border px-3 py-1 text-xs font-medium ${
-                      a.status === "Scheduled"
-                        ? "border-sky-200 bg-sky-50 text-sky-700"
-                        : "border-slate-200 bg-slate-50 text-slate-600"
-                    }`}
-                  >
-                    {a.status}
-                  </span>
-                </div>
-              </div>
-            )
-          })}
+        {isLoading && <p className="text-sm text-slate-500">Loading appointments...</p>}
 
-          {visibleAppointments.length === 0 && (
-            <p className="rounded-2xl border bg-white p-6 text-sm text-slate-500">
-              No {activeTab.toLowerCase()} appointments.
-            </p>
-          )}
-        </div>
+        {loadError && !isLoading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
+
+        {/* Appointment cards */}
+        {!isLoading && !loadError && (
+          <div className="space-y-3">
+            {visibleAppointments.map((a) => {
+              const { day, month } = formatDateBox(a.appointmentDateTime)
+              return (
+                <div
+                  key={a.appointmentID}
+                  className="flex items-center justify-between rounded-2xl border bg-white px-5 py-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-teal-50 py-1.5">
+                      <span className="text-lg font-bold leading-tight text-teal-700">{day}</span>
+                      <span className="text-xs font-medium uppercase text-teal-500">{month}</span>
+                    </div>
+                    <div className={`h-10 w-10 shrink-0 rounded-full ${colorForId(a.petID)}`} />
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {a.petName ?? "—"} <span className="font-normal text-slate-400">—</span>{" "}
+                        <span className="font-normal text-teal-600">{ownerNameByPetId.get(a.petID) ?? "—"}</span>
+                      </div>
+                      <div className="text-xs text-slate-500">{a.reason ?? "General visit"}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-slate-900">{formatTime(a.appointmentDateTime)}</div>
+                      {isAdmin ? (
+                        <select
+                          value={a.veterinarianUserID ?? ""}
+                          disabled={updatingId === a.appointmentID}
+                          onChange={(e) =>
+                            handleAssignVeterinarian(a, e.target.value ? Number(e.target.value) : null)
+                          }
+                          className="mt-0.5 h-7 rounded-md border border-slate-200 bg-slate-50 px-1.5 text-xs text-teal-700 outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-60"
+                        >
+                          <option value="">Unassigned</option>
+                          {veterinarianOptions.map((u) => (
+                            <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="text-xs text-teal-600">{a.veterinarianName ?? "Unassigned"}</div>
+                      )}
+                    </div>
+                    <span
+                      className={`rounded-md border px-3 py-1 text-xs font-medium ${
+                        a.status === "Scheduled"
+                          ? "border-sky-200 bg-sky-50 text-sky-700"
+                          : a.status === "Completed"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : a.status === "Cancelled"
+                          ? "border-red-200 bg-red-50 text-red-700"
+                          : "border-slate-200 bg-slate-50 text-slate-600"
+                      }`}
+                    >
+                      {a.status === "NoShow" ? "No-Show" : a.status}
+                    </span>
+                    {isAdmin && a.status === "Scheduled" && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleUpdateStatus(a, "Completed")}
+                          disabled={updatingId === a.appointmentID}
+                          title="Mark Completed"
+                          className="flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          Complete
+                        </button>
+                        <button
+                          onClick={() => handleUpdateStatus(a, "NoShow")}
+                          disabled={updatingId === a.appointmentID}
+                          title="Mark No-Show"
+                          className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+                        >
+                          <UserX className="h-3.5 w-3.5" />
+                          No-Show
+                        </button>
+                        <button
+                          onClick={() => handleUpdateStatus(a, "Cancelled")}
+                          disabled={updatingId === a.appointmentID}
+                          title="Cancel Appointment"
+                          className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
+                        >
+                          <Ban className="h-3.5 w-3.5" />
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+            {visibleAppointments.length === 0 && (
+              <p className="rounded-2xl border bg-white p-6 text-sm text-slate-500">
+                No {activeTab === "NoShow" ? "no-show" : activeTab.toLowerCase()} appointments.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Book Appointment Modal */}
@@ -1992,21 +2297,128 @@ export default function AppointmentsPage() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 p-6">
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Pet
-                </label>
-                <select
-                  required
-                  value={form.pet}
-                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  <option value="">— Select pet —</option>
-                  {petOptions.map((p) => (
-                    <option key={p.name} value={p.name}>{p.name}</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Pet
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingNewPet((prev) => !prev)}
+                    className="text-xs font-semibold text-teal-700 hover:underline"
+                  >
+                    {isAddingNewPet ? "← Select existing pet" : "+ Add New Pet"}
+                  </button>
+                </div>
+
+                {isAddingNewPet ? (
+                  <div className="space-y-4 rounded-lg border border-teal-100 bg-teal-50/40 p-4">
+                    <input
+                      type="text"
+                      required
+                      value={newPetForm.name}
+                      onChange={(e) => setNewPetForm({ ...newPetForm, name: e.target.value })}
+                      placeholder="Pet name"
+                      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                    />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <select
+                        value={newPetForm.species}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, species: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      >
+                        <option value="Dog">Dog</option>
+                        <option value="Cat">Cat</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={newPetForm.breed}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, breed: e.target.value })}
+                        placeholder="Breed"
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="date"
+                        value={newPetForm.dateOfBirth}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, dateOfBirth: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                      <select
+                        value={newPetForm.gender}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, gender: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      >
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="N">Neutered</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={newPetForm.color}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, color: e.target.value })}
+                        placeholder="Color"
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                      <input
+                        type="text"
+                        value={newPetForm.microchipID}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, microchipID: e.target.value })}
+                        placeholder="Microchip ID (optional)"
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                    </div>
+
+                    {isAdmin && (
+                      <select
+                        required
+                        value={newPetForm.ownerUserID}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, ownerUserID: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      >
+                        <option value="">— Select owner —</option>
+                        {ownerOptions.map((u) => (
+                          <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
+                        ))}
+                      </select>
+                    )}
+
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewPetPhoto(e.target.files?.[0] ?? null)}
+                        className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-200"
+                      />
+                      {newPetPhoto && <p className="mt-1 text-xs text-slate-500">{newPetPhoto.name}</p>}
+                    </div>
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={form.petID}
+                    onChange={(e) => setForm({ ...form, petID: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Select pet —</option>
+                    {pets.map((p) => (
+                      <option key={p.petID} value={p.petID}>{p.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -2049,22 +2461,6 @@ export default function AppointmentsPage() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Veterinarian
-                </label>
-                <select
-                  required
-                  value={form.vet}
-                  onChange={(e) => setForm({ ...form, vet: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  {vetOptions.map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              </div>
-
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -2075,9 +2471,10 @@ export default function AppointmentsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                  disabled={isSaving}
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
-                  Save
+                  {isSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>
@@ -2089,33 +2486,166 @@ export default function AppointmentsPage() {
 }
 </file>
 
-<file path="src/features/dashboard/AdminDashboard.tsx">
-
-</file>
-
 <file path="src/features/dashboard/Dashboardpage.tsx">
+import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
-import { PawPrint, ClipboardList, CalendarDays, Syringe, } from "lucide-react"
+import { PawPrint, ClipboardList, CalendarDays, Syringe } from "lucide-react"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
+import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
+import type { MedicalRecordReadDto } from "@/services/medicalRecords/medicalRecords.dtos"
+import { vaccinationsService } from "@/services/vaccinations/vaccinations.service"
+import type { VaccinationReadDto } from "@/services/vaccinations/vaccinations.dtos"
+import { appointmentsService } from "@/services/appointments/appointments.service"
+import type { AppointmentReadDto } from "@/services/appointments/appointments.dtos"
 
-const stats = [
-  { label: "Total Pets", value: 5, icon: PawPrint, color: "from-sky-500 to-sky-600" },
-  { label: "Records This Month", value: 5, icon: ClipboardList, color: "from-emerald-500 to-emerald-600" },
-  { label: "Upcoming Appts", value: 3, icon: CalendarDays, color: "from-amber-500 to-amber-600" },
-  { label: "Vaccines Due", value: 1, icon: Syringe, color: "from-orange-500 to-red-500" },
-]
+function daysUntil(dateStr: string): number {
+  const due = new Date(dateStr)
+  const today = new Date()
+  return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
 
-const appointments = [
-  { date: "24\nJun", pet: "Luna", owner: "Carlos Mendez", note: "Dermatitis follow-up", time: "09:30" },
-  { date: "25\nJun", pet: "Titan", owner: "Carlos Mendez", note: "Physiotherapy assessment", time: "14:00" },
-  { date: "08\nJul", pet: "Bella", owner: "Maria Santos", note: "Pre-surgical exam (spay)", time: "10:00" },
-]
+function isSameMonth(dateStr: string): boolean {
+  const d = new Date(dateStr)
+  const now = new Date()
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+}
 
-const recentPatients = [
-  { pet: "Luna", type: "Dog · Female", breed: "Labrador Retriever", owner: "Carlos Mendez", lastVisit: "2025-06-10", status: "Active" },
-  { pet: "Mochi", type: "Cat · Male", breed: "Scottish Fold", owner: "Ana Torres", lastVisit: "2025-05-18", status: "Active" },
-]
+function formatDateBox(iso: string) {
+  const d = new Date(iso)
+  return {
+    day: d.toLocaleDateString("en-US", { day: "2-digit" }),
+    month: d.toLocaleDateString("en-US", { month: "short" }),
+  }
+}
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning!"
+  if (hour < 18) return "Good afternoon!"
+  return "Good evening!"
+}
 
 export default function DashboardPage() {
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [records, setRecords] = useState<MedicalRecordReadDto[]>([])
+  const [vaccinations, setVaccinations] = useState<VaccinationReadDto[]>([])
+  const [appointments, setAppointments] = useState<AppointmentReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [petsData, recordsData, vaccinationsData, appointmentsData] = await Promise.all([
+          petsService.getAll(),
+          medicalRecordsService.getAll(),
+          vaccinationsService.getAll(),
+          appointmentsService.getAll(),
+        ])
+        if (!cancelled) {
+          setPets(petsData)
+          setRecords(recordsData)
+          setVaccinations(vaccinationsData)
+          setAppointments(appointmentsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load dashboard data."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const recordsThisMonth = useMemo(
+    () => records.filter((r) => isSameMonth(r.visitDate)).length,
+    [records]
+  )
+
+  const upcomingAppointments = useMemo(
+    () =>
+      appointments
+        .filter((a) => a.status === "Scheduled" && new Date(a.appointmentDateTime) >= new Date())
+        .sort((a, b) => a.appointmentDateTime.localeCompare(b.appointmentDateTime)),
+    [appointments]
+  )
+
+  const dueVaccinations = useMemo(
+    () =>
+      vaccinations
+        .filter((v) => v.nextDueDate && daysUntil(v.nextDueDate) <= 60)
+        .sort((a, b) => (a.nextDueDate ?? "").localeCompare(b.nextDueDate ?? "")),
+    [vaccinations]
+  )
+
+  const ownerNameByPetId = useMemo(() => {
+    const map = new Map<number, string>()
+    pets.forEach((p) => map.set(p.petID, p.ownerName ?? "—"))
+    return map
+  }, [pets])
+
+  const lastVisitByPetId = useMemo(() => {
+    const map = new Map<number, string>()
+    records.forEach((r) => {
+      const current = map.get(r.petID)
+      if (!current || r.visitDate > current) map.set(r.petID, r.visitDate)
+    })
+    return map
+  }, [records])
+
+  const recentPatients = useMemo(
+    () => [...pets].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5),
+    [pets]
+  )
+
+  const stats = [
+    { label: "Total Pets", value: pets.length, icon: PawPrint, color: "from-sky-500 to-sky-600" },
+    { label: "Records This Month", value: recordsThisMonth, icon: ClipboardList, color: "from-emerald-500 to-emerald-600" },
+    { label: "Upcoming Appts", value: upcomingAppointments.length, icon: CalendarDays, color: "from-amber-500 to-amber-600" },
+    { label: "Vaccines Due", value: dueVaccinations.length, icon: Syringe, color: "from-orange-500 to-red-500" },
+  ]
+
+  const todayLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div className="p-8">
+          <p className="text-sm text-slate-500">Loading dashboard...</p>
+        </div>
+      </AppShell>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <AppShell>
+        <div className="p-8">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        </div>
+      </AppShell>
+    )
+  }
+
   return (
     <AppShell>
       <div className="space-y-6 p-8">
@@ -2123,14 +2653,21 @@ export default function DashboardPage() {
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Clinic is open · Friday, July 10
+            {todayLabel}
           </span>
           <h2 className="mt-4 flex items-center gap-2 text-3xl font-bold text-white">
-            Good afternoon!
+            {getGreeting()}
           </h2>
           <p className="mt-2 text-slate-300">
-            You have <span className="font-semibold text-white">3 appointments</span> scheduled today and{" "}
-            <span className="font-semibold text-white">1 vaccine due</span>.
+            You have{" "}
+            <span className="font-semibold text-white">
+              {upcomingAppointments.length} appointment{upcomingAppointments.length === 1 ? "" : "s"}
+            </span>{" "}
+            scheduled and{" "}
+            <span className="font-semibold text-white">
+              {dueVaccinations.length} vaccine{dueVaccinations.length === 1 ? "" : "s"} due
+            </span>
+            .
           </p>
         </div>
 
@@ -2162,27 +2699,37 @@ export default function DashboardPage() {
                 <CalendarDays className="h-4 w-4 text-emerald-600" />
                 Upcoming Appointments
               </div>
-              <span className="text-xs text-slate-500">{appointments.length}</span>
+              <span className="text-xs text-slate-500">{upcomingAppointments.length}</span>
             </div>
             <div className="divide-y">
-              {appointments.map((a) => (
-                <div key={a.pet + a.date} className="flex items-center justify-between px-5 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="whitespace-pre-line rounded-lg bg-slate-100 px-2 py-1 text-center text-xs font-semibold leading-tight text-slate-700">
-                      {a.date}
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        {a.pet} · <span className="font-normal text-slate-500">{a.owner}</span>
+              {upcomingAppointments.slice(0, 5).map((a) => {
+                const { day, month } = formatDateBox(a.appointmentDateTime)
+                return (
+                  <div key={a.appointmentID} className="flex items-center justify-between px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-slate-100 px-2 py-1 text-center text-xs font-semibold leading-tight text-slate-700">
+                        <div>{day}</div>
+                        <div>{month}</div>
                       </div>
-                      <div className="text-xs text-slate-500">{a.note}</div>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          {a.petName ?? "—"} ·{" "}
+                          <span className="font-normal text-slate-500">
+                            {ownerNameByPetId.get(a.petID) ?? "—"}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500">{a.reason ?? "General visit"}</div>
+                      </div>
                     </div>
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                      {formatTime(a.appointmentDateTime)}
+                    </span>
                   </div>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                    {a.time}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
+              {upcomingAppointments.length === 0 && (
+                <p className="px-5 py-6 text-sm text-slate-500">No upcoming appointments.</p>
+              )}
             </div>
           </div>
 
@@ -2192,19 +2739,35 @@ export default function DashboardPage() {
                 <Syringe className="h-4 w-4 text-amber-600" />
                 Vaccination Reminders
               </div>
-              <span className="text-xs font-medium text-amber-600">1 due</span>
+              <span className="text-xs font-medium text-amber-600">{dueVaccinations.length} due</span>
             </div>
-            <div className="flex items-center justify-between px-5 py-3">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-slate-200" />
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">Luna</div>
-                  <div className="text-xs text-slate-500">Bordetella</div>
-                </div>
-              </div>
-              <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
-                Due Soon
-              </span>
+            <div className="divide-y">
+              {dueVaccinations.slice(0, 5).map((v) => {
+                const overdue = v.nextDueDate ? daysUntil(v.nextDueDate) < 0 : false
+                return (
+                  <div key={v.vaccinationID} className="flex items-center justify-between px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-slate-200" />
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">{v.petName ?? "—"}</div>
+                        <div className="text-xs text-slate-500">{v.vaccineType}</div>
+                      </div>
+                    </div>
+                    <span
+                      className={`rounded-md border px-2 py-1 text-xs font-medium ${
+                        overdue
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-amber-300 bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {overdue ? "Overdue" : "Due Soon"}
+                    </span>
+                  </div>
+                )
+              })}
+              {dueVaccinations.length === 0 && (
+                <p className="px-5 py-6 text-sm text-slate-500">No vaccines due soon.</p>
+              )}
             </div>
           </div>
         </div>
@@ -2216,7 +2779,7 @@ export default function DashboardPage() {
               <PawPrint className="h-4 w-4 text-emerald-600" />
               Recent Patients
             </div>
-            <span className="text-xs text-slate-500">{recentPatients.length} total</span>
+            <span className="text-xs text-slate-500">{recentPatients.length} shown</span>
           </div>
           <table className="w-full text-left text-sm">
             <thead>
@@ -2225,30 +2788,35 @@ export default function DashboardPage() {
                 <th className="px-5 py-3 font-medium">Breed</th>
                 <th className="px-5 py-3 font-medium">Owner</th>
                 <th className="px-5 py-3 font-medium">Last Visit</th>
-                <th className="px-5 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {recentPatients.map((p) => (
-                <tr key={p.pet}>
+                <tr key={p.petID}>
                   <td className="flex items-center gap-3 px-5 py-3">
                     <div className="h-9 w-9 rounded-full bg-slate-200" />
                     <div>
-                      <div className="font-semibold text-slate-900">{p.pet}</div>
-                      <div className="text-xs text-slate-500">{p.type}</div>
+                      <div className="font-semibold text-slate-900">{p.name}</div>
+                      <div className="text-xs text-slate-500">
+                        {p.species}
+                        {p.gender ? ` · ${p.gender}` : ""}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-teal-600">{p.breed}</td>
-                  <td className="px-5 py-3 text-slate-700">{p.owner}</td>
-                  <td className="px-5 py-3 text-slate-500">{p.lastVisit}</td>
-                  <td className="px-5 py-3">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      {p.status}
-                    </span>
+                  <td className="px-5 py-3 text-teal-600">{p.breed || "—"}</td>
+                  <td className="px-5 py-3 text-slate-700">{p.ownerName ?? "—"}</td>
+                  <td className="px-5 py-3 text-slate-500">
+                    {lastVisitByPetId.get(p.petID)?.slice(0, 10) ?? "No visits yet"}
                   </td>
                 </tr>
               ))}
+              {recentPatients.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-6 text-sm text-slate-500">
+                    No pets yet.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -2259,137 +2827,405 @@ export default function DashboardPage() {
 </file>
 
 <file path="src/features/dashboard/OwnerDashboard.tsx">
+import { useEffect, useMemo, useState } from "react"
+import { AppShell } from "@/components/layout/Appshell"
+import { PawPrint, ClipboardList, CalendarDays, Syringe } from "lucide-react"
+import { appointmentsService } from "@/services/appointments/appointments.service"
+import type { AppointmentReadDto } from "@/services/appointments/appointments.dtos"
+import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
+import type { MedicalRecordReadDto } from "@/services/medicalRecords/medicalRecords.dtos"
+import { vaccinationsService } from "@/services/vaccinations/vaccinations.service"
+import type { VaccinationReadDto } from "@/services/vaccinations/vaccinations.dtos"
 
+interface OwnedPet {
+  petID: number
+  name: string
+}
+
+function deriveMyPets(
+  appointments: AppointmentReadDto[],
+  records: MedicalRecordReadDto[],
+  vaccinations: VaccinationReadDto[]
+): OwnedPet[] {
+  const map = new Map<number, string>()
+  appointments.forEach((a) => map.set(a.petID, a.petName ?? `Pet #${a.petID}`))
+  records.forEach((r) => map.set(r.petID, r.petName ?? `Pet #${r.petID}`))
+  vaccinations.forEach((v) => map.set(v.petID, v.petName ?? `Pet #${v.petID}`))
+  return Array.from(map.entries()).map(([petID, name]) => ({ petID, name }))
+}
+
+function isDueSoon(nextDueDate: string | null): boolean {
+  if (!nextDueDate) return false
+  const daysUntil = Math.ceil((new Date(nextDueDate).getTime() - Date.now()) / 86_400_000)
+  return daysUntil <= 60
+}
+
+export default function OwnerDashboard() {
+  const [appointments, setAppointments] = useState<AppointmentReadDto[]>([])
+  const [records, setRecords] = useState<MedicalRecordReadDto[]>([])
+  const [vaccinations, setVaccinations] = useState<VaccinationReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [appointmentsData, recordsData, vaccinationsData] = await Promise.all([
+          appointmentsService.getAll(),
+          medicalRecordsService.getAll(),
+          vaccinationsService.getAll(),
+        ])
+        if (!cancelled) {
+          setAppointments(appointmentsData)
+          setRecords(recordsData)
+          setVaccinations(vaccinationsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load your dashboard."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
+  const myPets = useMemo(
+    () => deriveMyPets(appointments, records, vaccinations),
+    [appointments, records, vaccinations]
+  )
+
+  const upcomingAppointments = useMemo(
+    () => appointments.filter((a) => a.status === "Scheduled")
+      .sort((a, b) => a.appointmentDateTime.localeCompare(b.appointmentDateTime)),
+    [appointments]
+  )
+
+  const vaccinesDueSoon = useMemo(
+    () => vaccinations.filter((v) => isDueSoon(v.nextDueDate)),
+    [vaccinations]
+  )
+
+  const stats = [
+    { label: "My Pets", value: myPets.length, icon: PawPrint, color: "from-sky-500 to-sky-600" },
+    { label: "Medical Records", value: records.length, icon: ClipboardList, color: "from-emerald-500 to-emerald-600" },
+    { label: "Upcoming Appts", value: upcomingAppointments.length, icon: CalendarDays, color: "from-amber-500 to-amber-600" },
+    { label: "Vaccines Due", value: vaccinesDueSoon.length, icon: Syringe, color: "from-orange-500 to-red-500" },
+  ]
+
+  if (isLoading) {
+    return <AppShell><div className="p-8 text-sm text-slate-500">Loading your dashboard...</div></AppShell>
+  }
+
+  if (loadError) {
+    return (
+      <AppShell>
+        <div className="p-8">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError}</div>
+        </div>
+      </AppShell>
+    )
+  }
+
+  return (
+    <AppShell>
+      <div className="space-y-6 p-8">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Welcome back
+          </span>
+          <h2 className="mt-4 text-3xl font-bold text-white">Hi there!</h2>
+          <p className="mt-2 text-slate-300">
+            You have <span className="font-semibold text-white">{upcomingAppointments.length} upcoming appointment{upcomingAppointments.length === 1 ? "" : "s"}</span>{" "}
+            and <span className="font-semibold text-white">{vaccinesDueSoon.length} vaccine{vaccinesDueSoon.length === 1 ? "" : "s"} due soon</span>.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat) => {
+            const Icon = stat.icon
+            return (
+              <div key={stat.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.color} p-5 text-white shadow-sm`}>
+                <div className="mb-6 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="text-sm text-white/80">{stat.label}</div>
+                <div className="absolute -bottom-4 -right-4 h-20 w-20 rounded-full bg-white/10" />
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <div className="flex items-center justify-between border-b bg-emerald-50/50 px-5 py-3">
+              <div className="flex items-center gap-2 font-semibold text-slate-900">
+                <CalendarDays className="h-4 w-4 text-emerald-600" />
+                Upcoming Appointments
+              </div>
+              <span className="text-xs text-slate-500">{upcomingAppointments.length}</span>
+            </div>
+            <div className="divide-y">
+              {upcomingAppointments.slice(0, 5).map((a) => (
+                <div key={a.appointmentID} className="flex items-center justify-between px-5 py-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">{a.petName ?? "—"}</div>
+                    <div className="text-xs text-slate-500">{a.reason ?? "General visit"}</div>
+                  </div>
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    {new Date(a.appointmentDateTime).toLocaleString("en-US", { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              ))}
+              {upcomingAppointments.length === 0 && (
+                <p className="px-5 py-4 text-sm text-slate-500">No upcoming appointments.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <div className="flex items-center justify-between border-b bg-amber-50/50 px-5 py-3">
+              <div className="flex items-center gap-2 font-semibold text-slate-900">
+                <Syringe className="h-4 w-4 text-amber-600" />
+                Vaccination Reminders
+              </div>
+              <span className="text-xs font-medium text-amber-600">{vaccinesDueSoon.length} due</span>
+            </div>
+            <div className="divide-y">
+              {vaccinesDueSoon.slice(0, 5).map((v) => (
+                <div key={v.vaccinationID} className="flex items-center justify-between px-5 py-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">{v.petName ?? "—"}</div>
+                    <div className="text-xs text-slate-500">{v.vaccineType}</div>
+                  </div>
+                  <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                    {v.nextDueDate}
+                  </span>
+                </div>
+              ))}
+              {vaccinesDueSoon.length === 0 && (
+                <p className="px-5 py-4 text-sm text-slate-500">No vaccines due soon.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border bg-white">
+          <div className="flex items-center justify-between border-b bg-emerald-50/50 px-5 py-3">
+            <div className="flex items-center gap-2 font-semibold text-slate-900">
+              <PawPrint className="h-4 w-4 text-emerald-600" />
+              My Pets
+            </div>
+            <span className="text-xs text-slate-500">{myPets.length} total</span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
+            {myPets.map((pet) => (
+              <div key={pet.petID} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-teal-200" />
+                <span className="font-medium text-slate-900">{pet.name}</span>
+              </div>
+            ))}
+            {myPets.length === 0 && (
+              <p className="text-sm text-slate-500">No pets on file yet.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </AppShell>
+  )
+}
 </file>
 
 <file path="src/features/documents/Documentspage.tsx">
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Upload, Download, FileText, X } from "lucide-react"
+import { documentsService } from "@/services/documents/documents.service"
+import type { DocumentsReadDto } from "@/services/documents/documents.dtos"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
+import { useAuth } from "@/services/auth/auth.service"
 
-interface Document {
-  id: string
-  title: string
-  type: "Lab Result" | "Radiology" | "Clinical Report"
-  pet: string
-  avatarColor: string
-  date: string
-  sizeLabel: string
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
 }
 
-const initialDocuments: Document[] = [
-  { id: "1", title: "Skin culture results – June 2025", type: "Lab Result", pet: "Luna", avatarColor: "bg-orange-200", date: "2025-06-13", sizeLabel: "1.2 MB" },
-  { id: "2", title: "Left stifle X-ray – June 2025", type: "Radiology", pet: "Titan", avatarColor: "bg-amber-300", date: "2025-06-01", sizeLabel: "3.8 MB" },
-  { id: "3", title: "Annual blood panel – March 2025", type: "Lab Result", pet: "Luna", avatarColor: "bg-orange-200", date: "2025-03-22", sizeLabel: "0.4 MB" },
-  { id: "4", title: "12-month wellness report", type: "Clinical Report", pet: "Bella", avatarColor: "bg-yellow-200", date: "2025-06-15", sizeLabel: "0.8 MB" },
-]
+const docTypeOptions = ["Lab Result", "Radiology", "Clinical Report"]
 
-const petOptions = [
-  { name: "Luna", avatarColor: "bg-orange-200" },
-  { name: "Mochi", avatarColor: "bg-slate-300" },
-  { name: "Titan", avatarColor: "bg-amber-300" },
-  { name: "Bella", avatarColor: "bg-yellow-200" },
-  { name: "Neko", avatarColor: "bg-slate-500" },
-]
-const docTypes: Document["type"][] = ["Lab Result", "Radiology", "Clinical Report"]
-
-const typeStyles: Record<Document["type"], string> = {
+const typeStyles: Record<string, string> = {
   "Lab Result": "bg-sky-100 text-sky-600",
   "Radiology": "bg-orange-100 text-orange-600",
   "Clinical Report": "bg-emerald-100 text-emerald-600",
 }
 
 const emptyForm = {
-  pet: "",
-  type: "Lab Result" as Document["type"],
+  petID: "",
+  documentType: docTypeOptions[0],
   description: "",
   file: null as File | null,
 }
 
-function formatSize(bytes: number) {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>(initialDocuments)
+  const { isAdmin } = useAuth()
+
+  const [documents, setDocuments] = useState<DocumentsReadDto[]>([])
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const requests: [Promise<DocumentsReadDto[]>, Promise<PetReadDto[]> | Promise<PetReadDto[]>] = [
+          documentsService.getAll(),
+          isAdmin ? petsService.getAll() : Promise.resolve([]),
+        ]
+        const [documentsData, petsData] = await Promise.all(requests)
+        if (!cancelled) {
+          setDocuments(documentsData)
+          setPets(petsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load documents."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [isAdmin])
 
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
+    setSaveError("")
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.pet || !form.description.trim()) return
+    if (!form.petID || !form.file) return
 
-    const petMatch = petOptions.find((p) => p.name === form.pet)
+    setIsSaving(true)
+    setSaveError("")
+    try {
+      const formData = new FormData()
+      formData.append("PetID", form.petID)
+      formData.append("File", form.file)
+      if (form.description.trim()) formData.append("Description", form.description.trim())
+      formData.append("DocumentType", form.documentType)
 
-    const newDoc: Document = {
-      id: crypto.randomUUID(),
-      title: form.description.trim(),
-      type: form.type,
-      pet: form.pet,
-      avatarColor: petMatch?.avatarColor ?? "bg-slate-300",
-      date: new Date().toISOString().slice(0, 10),
-      sizeLabel: form.file ? formatSize(form.file.size) : "—",
+      const created = await documentsService.upload(formData)
+      setDocuments((prev) => [created, ...prev])
+      closeModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not upload document."
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
     }
-
-    setDocuments((prev) => [newDoc, ...prev])
-    closeModal()
   }
 
-  const handleDownload = (doc: Document) => {
-    // No backend yet — this is a placeholder until real file storage is wired up.
-    console.log("TODO: download", doc.id)
+  const handleDownload = async (doc: DocumentsReadDto) => {
+    setDownloadingId(doc.documentID)
+    try {
+      await documentsService.download(doc.documentID, doc.fileName)
+    } catch {
+      alert("Could not download this file.")
+    } finally {
+      setDownloadingId(null)
+    }
   }
 
   return (
     <AppShell>
       <div className="space-y-4 p-8">
-        <div className="flex justify-end">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
-          >
-            <Upload className="h-4 w-4" />
-            Upload Document
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            >
+              <Upload className="h-4 w-4" />
+              Upload Document
+            </button>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {documents.map((doc) => (
-            <div key={doc.id} className="rounded-2xl border bg-white p-5 shadow-sm">
-              <div className="mb-3 flex items-start gap-3">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${typeStyles[doc.type]}`}>
-                  <FileText className="h-5 w-5" />
+        {isLoading && <p className="text-sm text-slate-500">Loading documents...</p>}
+
+        {loadError && !isLoading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {documents.map((doc) => (
+              <div key={doc.documentID} className="rounded-2xl border bg-white p-5 shadow-sm">
+                <div className="mb-3 flex items-start gap-3">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${typeStyles[doc.documentType ?? ""] ?? "bg-slate-100 text-slate-600"}`}>
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-slate-900">{doc.description || doc.fileName}</div>
+                    <div className="text-xs text-teal-600">{doc.documentType ?? "Document"}</div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-slate-900">{doc.title}</div>
-                  <div className="text-xs text-teal-600">{doc.type}</div>
+
+                <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
+                  <div className={`h-5 w-5 shrink-0 rounded-full ${colorForId(doc.petID)}`} />
+                  <span>{doc.petName ?? "—"} · {doc.uploadedAt.slice(0, 10)}</span>
                 </div>
+
+                <button
+                  onClick={() => handleDownload(doc)}
+                  disabled={downloadingId === doc.documentID}
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 text-sm font-medium text-teal-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {downloadingId === doc.documentID ? "Downloading..." : "Download"}
+                </button>
               </div>
+            ))}
 
-              <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
-                <div className={`h-5 w-5 shrink-0 rounded-full ${doc.avatarColor}`} />
-                <span>{doc.pet} · {doc.date} · {doc.sizeLabel}</span>
-              </div>
-
-              <button
-                onClick={() => handleDownload(doc)}
-                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 text-sm font-medium text-teal-700 hover:bg-slate-50"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Download
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {documents.length === 0 && (
-          <p className="text-sm text-slate-500">No documents uploaded yet.</p>
+            {documents.length === 0 && (
+              <p className="text-sm text-slate-500">No documents uploaded yet.</p>
+            )}
+          </div>
         )}
       </div>
 
@@ -2405,19 +3241,25 @@ export default function DocumentsPage() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 p-6">
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Pet
                 </label>
                 <select
                   required
-                  value={form.pet}
-                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  value={form.petID}
+                  onChange={(e) => setForm({ ...form, petID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 >
                   <option value="">— Select pet —</option>
-                  {petOptions.map((p) => (
-                    <option key={p.name} value={p.name}>{p.name}</option>
+                  {pets.map((p) => (
+                    <option key={p.petID} value={p.petID}>{p.name}</option>
                   ))}
                 </select>
               </div>
@@ -2427,11 +3269,11 @@ export default function DocumentsPage() {
                   Document Type
                 </label>
                 <select
-                  value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value as Document["type"] })}
+                  value={form.documentType}
+                  onChange={(e) => setForm({ ...form, documentType: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 >
-                  {docTypes.map((t) => (
+                  {docTypeOptions.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
@@ -2443,7 +3285,6 @@ export default function DocumentsPage() {
                 </label>
                 <input
                   type="text"
-                  required
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="e.g. Blood test results – June 2025"
@@ -2457,6 +3298,7 @@ export default function DocumentsPage() {
                 </label>
                 <input
                   type="file"
+                  required
                   onChange={(e) => setForm({ ...form, file: e.target.files?.[0] ?? null })}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-teal-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-teal-700"
                 />
@@ -2472,9 +3314,10 @@ export default function DocumentsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                  disabled={isSaving}
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
-                  Save
+                  {isSaving ? "Uploading..." : "Save"}
                 </button>
               </div>
             </form>
@@ -2490,48 +3333,14 @@ export default function DocumentsPage() {
 import { useEffect, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Search, Plus, X } from "lucide-react"
-import { api } from "@/services/apiConnection/api"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto, PetCreateDto } from "@/services/pets/pets.dtos"
+import { usersService } from "@/services/users/users.service"
+import type { UserReadDto } from "@/services/users/users.dtos"
+import { useAuth } from "@/services/auth/auth.service"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 
-// ---- Types matching the backend DTOs exactly ----
-
-interface PetReadDto {
-  petID: number
-  name: string
-  breed: string | null
-  species: string
-  dateOfBirth: string | null // "YYYY-MM-DD" or null
-  gender: string | null // "M" | "F" | "N" | null
-  color: string | null
-  microchipID: string | null
-  photoPath: string | null
-  ownerUserID: number
-  ownerName: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-interface PetCreateDto {
-  name: string
-  breed?: string
-  species: string
-  dateOfBirth?: string | null
-  gender?: string | null
-  color?: string
-  microchipID?: string
-  ownerUserID: number
-}
-
-interface UserReadDto {
-  userID: number
-  username: string
-  email: string
-  lastName: string | null
-  firstName: string | null
-  roleName: string | null
-}
-
-// ---- Local display helpers ----
-
+// ---- Local display helpers (unchanged) ----
 const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
 
 function colorForId(id: number) {
@@ -2578,11 +3387,13 @@ const emptyForm = {
 }
 
 export default function PetProfilesPage() {
+  const { isAdmin } = useAuth()
   const [pets, setPets] = useState<PetReadDto[]>([])
   const [users, setUsers] = useState<UserReadDto[]>([])
   const [query, setQuery] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [photo, setPhoto] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState("")
   const [saveError, setSaveError] = useState("")
@@ -2594,13 +3405,15 @@ export default function PetProfilesPage() {
       setIsLoading(true)
       setLoadError("")
       try {
-        const [petsData, usersData] = await Promise.all([
-          api.get<PetReadDto[]>("/api/Pets/GetAll"),
-          api.get<UserReadDto[]>("/api/Users/GetAll"),
-        ])
-        if (!cancelled) {
-          setPets(petsData)
-          setUsers(usersData)
+        const petsData = await petsService.getAll()
+        if (!cancelled) setPets(petsData)
+
+        // Owner list is only needed for Admin's "Owner" picker; PetOwner may not have access to it.
+        try {
+          const usersData = await usersService.getAll()
+          if (!cancelled) setUsers(usersData)
+        } catch {
+          if (!cancelled) setUsers([])
         }
       } catch (err) {
         if (!cancelled) {
@@ -2627,12 +3440,14 @@ export default function PetProfilesPage() {
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
+    setPhoto(null)
     setSaveError("")
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.ownerUserID) return
+    if (!form.name.trim()) return
+    if (isAdmin && !form.ownerUserID) return
 
     setIsSaving(true)
     setSaveError("")
@@ -2645,9 +3460,9 @@ export default function PetProfilesPage() {
         gender: form.gender || null,
         color: form.color.trim() || undefined,
         microchipID: form.microchipID.trim() || undefined,
-        ownerUserID: Number(form.ownerUserID),
+        ownerUserID: isAdmin ? Number(form.ownerUserID) : undefined,
       }
-      const created = await api.post<PetReadDto>("/api/Pets/Create", payload)
+      const created = await petsService.create(payload, photo)
       setPets((prev) => [created, ...prev])
       closeModal()
     } catch (err) {
@@ -2690,11 +3505,6 @@ export default function PetProfilesPage() {
         {loadError && !isLoading && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {loadError}
-            {loadError.includes("403") && (
-              <span className="block mt-1 text-red-600">
-                This usually means your logged-in account doesn't have the "Admin" role required by this endpoint.
-              </span>
-            )}
           </div>
         )}
 
@@ -2705,7 +3515,11 @@ export default function PetProfilesPage() {
               <div key={pet.petID} className="rounded-2xl border bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`h-11 w-11 shrink-0 rounded-full ${colorForId(pet.petID)}`} />
+                    <PetAvatar
+                      petID={pet.petID}
+                      hasPhoto={!!pet.photoPath}
+                      colorClassName={colorForId(pet.petID)}
+                    />
                     <div>
                       <div className="font-semibold text-slate-900">{pet.name}</div>
                       <div className="text-xs text-teal-600">{pet.breed || "Unknown breed"}</div>
@@ -2866,23 +3680,38 @@ export default function PetProfilesPage() {
                 </div>
               </div>
 
+              {isAdmin && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Owner
+                  </label>
+                  <select
+                    required
+                    value={form.ownerUserID}
+                    onChange={(e) => setForm({ ...form, ownerUserID: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Select owner —</option>
+                    {users.map((u) => (
+                      <option key={u.userID} value={u.userID}>
+                        {ownerDisplayName(u)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Owner
+                  Photo
                 </label>
-                <select
-                  required
-                  value={form.ownerUserID}
-                  onChange={(e) => setForm({ ...form, ownerUserID: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  <option value="">— Select owner —</option>
-                  {users.map((u) => (
-                    <option key={u.userID} value={u.userID}>
-                      {ownerDisplayName(u)}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+                  className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
+                />
+                {photo && <p className="text-xs text-slate-500">{photo.name}</p>}
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -2911,55 +3740,88 @@ export default function PetProfilesPage() {
 </file>
 
 <file path="src/features/records/MedicalRecordspage.tsx">
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, Eye, X } from "lucide-react"
+import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
+import type { MedicalRecordReadDto, MedicalRecordCreateDto } from "@/services/medicalRecords/medicalRecords.dtos"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
+import { useAuth } from "@/services/auth/auth.service"
 
-interface MedicalRecord {
-  id: string
-  date: string
-  pet: string
-  avatarColor: string
-  diagnosis: string
-  treatment: string
-  notes: string
-  vet: string
-  prescriptions: string[]
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
 }
 
-const initialRecords: MedicalRecord[] = [
-  { id: "1", date: "2025-06-10", pet: "Luna", avatarColor: "bg-orange-200", diagnosis: "Mild dermatitis, secondary bacterial infection", treatment: "Topical antibiotic cream, medicated shampoo 2x/week", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["Cephalexin 250mg – BID x 10 days", "Medicated shampoo"] },
-  { id: "2", date: "2025-03-22", pet: "Luna", avatarColor: "bg-orange-200", diagnosis: "Annual wellness check — no issues found", treatment: "Preventive care, heartworm test negative", notes: "", vet: "Dr. James Park", prescriptions: ["Heartgard Plus – monthly"] },
-  { id: "3", date: "2025-05-18", pet: "Mochi", avatarColor: "bg-slate-300", diagnosis: "Upper respiratory infection (viral)", treatment: "Supportive care, hydration, appetite stimulant", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["Mirtazapine 1.88mg – q72h", "Sub-Q fluids"] },
-  { id: "4", date: "2025-06-01", pet: "Titan", avatarColor: "bg-amber-300", diagnosis: "Cruciate ligament strain, left stifle", treatment: "NSAIDs, restricted activity 4 weeks, physio referral", notes: "", vet: "Dr. James Park", prescriptions: ["Carprofen 75mg – BID x 14 days", "Physio referral"] },
-  { id: "5", date: "2025-06-15", pet: "Bella", avatarColor: "bg-yellow-200", diagnosis: "Routine puppy exam, 12 months", treatment: "Spay scheduled for July 2025", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["None"] },
-]
-
-const petOptions = ["Luna", "Mochi", "Titan", "Bella", "Neko"]
-const vetOptions = ["Dr. Sarah Reyes", "Dr. James Park"]
+function prescriptionList(prescriptions: string | null): string[] {
+  if (!prescriptions || !prescriptions.trim()) return []
+  return prescriptions.split(";").map((s) => s.trim()).filter(Boolean)
+}
 
 const emptyForm = {
-  pet: "",
-  date: new Date().toISOString().slice(0, 10),
+  petID: "",
+  visitDate: new Date().toISOString().slice(0, 10),
   diagnosis: "",
   treatment: "",
   notes: "",
-  vet: vetOptions[0],
 }
 
 export default function MedicalRecordsPage() {
-  const [records, setRecords] = useState<MedicalRecord[]>(initialRecords)
+  const { isAdmin } = useAuth()
+
+  const [records, setRecords] = useState<MedicalRecordReadDto[]>([])
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [prescriptions, setPrescriptions] = useState<string[]>([])
   const [rxDraft, setRxDraft] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [recordsData, petsData] = await Promise.all([
+          medicalRecordsService.getAll(),
+          petsService.getAll(),
+        ])
+        if (!cancelled) {
+          setRecords(recordsData)
+          setPets(petsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load medical records."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
     setPrescriptions([])
     setRxDraft("")
+    setSaveError("")
   }
 
   const addPrescription = () => {
@@ -2968,114 +3830,131 @@ export default function MedicalRecordsPage() {
     setRxDraft("")
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.pet || !form.date || !form.diagnosis.trim() || !form.vet) return
+    if (!form.petID || !form.visitDate || !form.diagnosis.trim()) return
 
-    const petAvatar =
-      initialRecords.find((r) => r.pet === form.pet)?.avatarColor ?? "bg-slate-300"
-
-    const newRecord: MedicalRecord = {
-      id: crypto.randomUUID(),
-      date: form.date,
-      pet: form.pet,
-      avatarColor: petAvatar,
-      diagnosis: form.diagnosis.trim(),
-      treatment: form.treatment.trim() || "—",
-      notes: form.notes.trim(),
-      vet: form.vet,
-      prescriptions: prescriptions.length ? prescriptions : ["None"],
+    setIsSaving(true)
+    setSaveError("")
+    try {
+      const payload: MedicalRecordCreateDto = {
+        petID: Number(form.petID),
+        visitDate: form.visitDate,
+        diagnosis: form.diagnosis.trim() || undefined,
+        treatment: form.treatment.trim() || undefined,
+        notes: form.notes.trim() || undefined,
+        prescriptions: prescriptions.length ? prescriptions.join("; ") : undefined,
+      }
+      const created = await medicalRecordsService.create(payload)
+      setRecords((prev) =>
+        [...prev, created].sort((a, b) => b.visitDate.localeCompare(a.visitDate))
+      )
+      closeModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not save medical record."
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
     }
-
-    setRecords((prev) =>
-      [...prev, newRecord].sort((a, b) => b.date.localeCompare(a.date))
-    )
-    closeModal()
   }
 
   return (
     <AppShell>
       <div className="space-y-4 p-8">
-        <div className="flex justify-end">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New Record
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New Record
+            </button>
+          </div>
+        )}
 
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-6 py-3 font-medium">Date</th>
-                <th className="px-6 py-3 font-medium">Pet</th>
-                <th className="px-6 py-3 font-medium">Diagnosis</th>
-                <th className="px-6 py-3 font-medium">Vet</th>
-                <th className="px-6 py-3 font-medium">Prescriptions</th>
-                <th className="w-10 px-6 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {records.map((r) => (
-                <>
-                  <tr key={r.id} className="align-top">
-                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
-                      {r.date}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className={`h-7 w-7 shrink-0 rounded-full ${r.avatarColor}`} />
-                        <span className="font-medium text-slate-900">{r.pet}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{r.diagnosis}</div>
-                      <div className="text-xs text-teal-600">{r.treatment}</div>
-                    </td>
-                    <td className="px-6 py-4 text-teal-700">{r.vet}</td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {r.prescriptions.length === 1 && r.prescriptions[0] === "None"
-                        ? "0 rx"
-                        : `${r.prescriptions.length} rx`}
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
-                        className="text-teal-600 hover:text-teal-800"
-                        aria-label="View record details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                  {expandedId === r.id && (
-                    <tr className="bg-slate-50">
-                      <td colSpan={6} className="space-y-1 px-6 py-4 text-sm text-slate-600">
-                        {r.notes && (
-                          <div>
-                            <span className="font-semibold text-slate-800">Notes: </span>
-                            {r.notes}
+        {isLoading && <p className="text-sm text-slate-500">Loading records...</p>}
+
+        {loadError && !isLoading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && (
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 font-medium">Date</th>
+                  <th className="px-6 py-3 font-medium">Pet</th>
+                  <th className="px-6 py-3 font-medium">Diagnosis</th>
+                  <th className="px-6 py-3 font-medium">Prescriptions</th>
+                  <th className="w-10 px-6 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {records.map((r) => {
+                  const rx = prescriptionList(r.prescriptions)
+                  return (
+                    <>
+                      <tr key={r.recordID} className="align-top">
+                        <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
+                          {r.visitDate.slice(0, 10)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className={`h-7 w-7 shrink-0 rounded-full ${colorForId(r.petID)}`} />
+                            <span className="font-medium text-slate-900">{r.petName ?? "—"}</span>
                           </div>
-                        )}
-                        <div>
-                          <span className="font-semibold text-slate-800">Prescriptions: </span>
-                          {r.prescriptions.join(", ")}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-900">{r.diagnosis ?? "—"}</div>
+                          <div className="text-xs text-teal-600">{r.treatment ?? ""}</div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600">
+                          {rx.length === 0 ? "0 rx" : `${rx.length} rx`}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => setExpandedId(expandedId === r.recordID ? null : r.recordID)}
+                            className="text-teal-600 hover:text-teal-800"
+                            aria-label="View record details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedId === r.recordID && (
+                        <tr className="bg-slate-50">
+                          <td colSpan={5} className="space-y-1 px-6 py-4 text-sm text-slate-600">
+                            {r.notes && (
+                              <div>
+                                <span className="font-semibold text-slate-800">Notes: </span>
+                                {r.notes}
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-semibold text-slate-800">Prescriptions: </span>
+                              {rx.length ? rx.join(", ") : "None"}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  )
+                })}
+              </tbody>
+            </table>
 
-          {records.length === 0 && (
-            <p className="p-6 text-sm text-slate-500">No records yet.</p>
-          )}
-        </div>
+            {records.length === 0 && (
+              <p className="p-6 text-sm text-slate-500">No records yet.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add Medical Record Modal */}
@@ -3090,19 +3969,25 @@ export default function MedicalRecordsPage() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 p-6">
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Pet
                 </label>
                 <select
                   required
-                  value={form.pet}
-                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  value={form.petID}
+                  onChange={(e) => setForm({ ...form, petID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 >
                   <option value="">— Select pet —</option>
-                  {petOptions.map((p) => (
-                    <option key={p} value={p}>{p}</option>
+                  {pets.map((p) => (
+                    <option key={p.petID} value={p.petID}>{p.name}</option>
                   ))}
                 </select>
               </div>
@@ -3114,8 +3999,8 @@ export default function MedicalRecordsPage() {
                 <input
                   type="date"
                   required
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  value={form.visitDate}
+                  onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
@@ -3158,22 +4043,6 @@ export default function MedicalRecordsPage() {
                   rows={2}
                   className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Attending Vet
-                </label>
-                <select
-                  required
-                  value={form.vet}
-                  onChange={(e) => setForm({ ...form, vet: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  {vetOptions.map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
               </div>
 
               <div className="space-y-1.5">
@@ -3234,9 +4103,10 @@ export default function MedicalRecordsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                  disabled={isSaving}
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
-                  Save
+                  {isSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>
@@ -3249,34 +4119,27 @@ export default function MedicalRecordsPage() {
 </file>
 
 <file path="src/features/users/UserAccountspage.tsx">
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
-import { Plus, X, Pencil, UserX } from "lucide-react"
+import { Plus, X, Pencil, UserX, UserCheck } from "lucide-react"
+import { usersService } from "@/services/users/users.service"
+import type { UserReadDto, UserUpdateDto } from "@/services/users/users.dtos"
+import { rolesService } from "@/services/roles/roles.service"
+import type { RoleReadDto } from "@/services/roles/roles.dtos"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
+import { useAuth } from "@/services/auth/auth.service"
+import type { UserCreateDto } from "@/services/auth/auth.dtos"
 
-interface UserAccount {
-  id: string
-  name: string
-  email: string
-  role: "Admin / Vet" | "Pet Owner"
-  petsCount: number | null
-  status: "Active" | "Inactive"
-  avatarColor: string
-}
-
-const initialUsers: UserAccount[] = [
-  { id: "1", name: "Dr. Sarah Reyes", email: "admin@petvet.com", role: "Admin / Vet", petsCount: null, status: "Active", avatarColor: "bg-teal-600" },
-  { id: "2", name: "Carlos Mendez", email: "carlos@example.com", role: "Pet Owner", petsCount: 2, status: "Active", avatarColor: "bg-emerald-500" },
-  { id: "3", name: "Ana Torres", email: "ana@example.com", role: "Pet Owner", petsCount: 2, status: "Active", avatarColor: "bg-sky-500" },
-  { id: "4", name: "Dr. James Park", email: "jpark@petvet.com", role: "Admin / Vet", petsCount: null, status: "Active", avatarColor: "bg-indigo-600" },
-  { id: "5", name: "Maria Santos", email: "maria@example.com", role: "Pet Owner", petsCount: 1, status: "Active", avatarColor: "bg-green-600" },
-]
-
-const roleOptions: UserAccount["role"][] = ["Admin / Vet", "Pet Owner"]
 const avatarColors = ["bg-teal-600", "bg-emerald-500", "bg-sky-500", "bg-indigo-600", "bg-green-600", "bg-amber-500"]
 
-function getInitials(name: string) {
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
+}
+
+function getInitials(user: UserReadDto) {
+  const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username
   return name
-    .replace(/^Dr\.\s*/, "")
     .split(" ")
     .map((p) => p[0])
     .join("")
@@ -3284,95 +4147,207 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
+function displayName(user: UserReadDto) {
+  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username
+}
+
 const emptyForm = {
-  name: "",
+  username: "",
   email: "",
-  role: "Pet Owner" as UserAccount["role"],
+  firstName: "",
+  lastName: "",
+  phone: "",
+  roleID: "",
   password: "",
 }
 
 const emptyEditForm = {
-  id: "",
-  name: "",
+  userID: 0,
+  username: "",
   email: "",
-  role: "Pet Owner" as UserAccount["role"],
-  newPassword: "",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  roleID: "",
+  isActive: true,
 }
 
 export default function UserAccountsPage() {
-  const [users, setUsers] = useState<UserAccount[]>(initialUsers)
+  const { register, user: currentUser } = useAuth()
 
-  // Add User modal state
+  const [users, setUsers] = useState<UserReadDto[]>([])
+  const [roles, setRoles] = useState<RoleReadDto[]>([])
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
 
-  // Edit User modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editForm, setEditForm] = useState(emptyEditForm)
+  const [isEditSaving, setIsEditSaving] = useState(false)
+  const [editError, setEditError] = useState("")
+
+  const [togglingId, setTogglingId] = useState<number | null>(null)
+
+  const loadUsers = async () => {
+    const data = await usersService.getAll()
+    setUsers(data)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [usersData, rolesData, petsData] = await Promise.all([
+          usersService.getAll(),
+          rolesService.getAll(),
+          petsService.getAll(),
+        ])
+        if (!cancelled) {
+          setUsers(usersData)
+          setRoles(rolesData)
+          setPets(petsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load users."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const petsCountByUserId = useMemo(() => {
+    const map = new Map<number, number>()
+    pets.forEach((p) => map.set(p.ownerUserID, (map.get(p.ownerUserID) ?? 0) + 1))
+    return map
+  }, [pets])
 
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
+    setSaveError("")
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.email.trim() || !form.password) return
+    if (!form.username.trim() || !form.email.trim() || !form.password || !form.roleID) return
 
-    const newUser: UserAccount = {
-      id: crypto.randomUUID(),
-      name: form.name.trim(),
-      email: form.email.trim(),
-      role: form.role,
-      petsCount: form.role === "Pet Owner" ? 0 : null,
-      status: "Active",
-      avatarColor: avatarColors[users.length % avatarColors.length],
+    setIsSaving(true)
+    setSaveError("")
+    try {
+      const payload: UserCreateDto = {
+        username: form.username.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        firstName: form.firstName.trim() || undefined,
+        lastName: form.lastName.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        roleID: Number(form.roleID),
+      }
+      await register(payload)
+      await loadUsers()
+      closeModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not create user."
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
     }
-
-    setUsers((prev) => [...prev, newUser])
-    closeModal()
   }
 
-  const toggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id
-          ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
-          : u
-      )
-    )
-  }
-
-  const openEditModal = (user: UserAccount) => {
+  const openEditModal = (u: UserReadDto) => {
     setEditForm({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      newPassword: "",
+      userID: u.userID,
+      username: u.username,
+      email: u.email,
+      firstName: u.firstName ?? "",
+      lastName: u.lastName ?? "",
+      phone: u.phone ?? "",
+      roleID: String(u.roleID),
+      isActive: u.isActive,
     })
+    setEditError("")
     setIsEditModalOpen(true)
   }
 
   const closeEditModal = () => {
     setIsEditModalOpen(false)
     setEditForm(emptyEditForm)
+    setEditError("")
   }
 
-  const handleEditSave = (e: React.FormEvent) => {
+  const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editForm.name.trim() || !editForm.email.trim()) return
+    if (!editForm.username.trim() || !editForm.email.trim() || !editForm.roleID) return
 
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === editForm.id
-          ? { ...u, name: editForm.name.trim(), email: editForm.email.trim(), role: editForm.role }
-          : u
-      )
-    )
-    // editForm.newPassword, if set, would be sent to the backend here once connected —
-    // it's intentionally not stored anywhere in local state.
-    closeEditModal()
+    setIsEditSaving(true)
+    setEditError("")
+    try {
+      const payload: UserUpdateDto = {
+        username: editForm.username.trim(),
+        email: editForm.email.trim(),
+        firstName: editForm.firstName.trim() || undefined,
+        lastName: editForm.lastName.trim() || undefined,
+        phone: editForm.phone.trim() || undefined,
+        roleID: Number(editForm.roleID),
+        isActive: editForm.isActive,
+      }
+      const updated = await usersService.update(editForm.userID, payload)
+      setUsers((prev) => prev.map((u) => (u.userID === updated.userID ? updated : u)))
+      closeEditModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not update user."
+      setEditError(message)
+    } finally {
+      setIsEditSaving(false)
+    }
+  }
+
+  const toggleStatus = async (u: UserReadDto) => {
+    setTogglingId(u.userID)
+    try {
+      const payload: UserUpdateDto = {
+        username: u.username,
+        email: u.email,
+        firstName: u.firstName ?? undefined,
+        lastName: u.lastName ?? undefined,
+        phone: u.phone ?? undefined,
+        roleID: u.roleID,
+        isActive: !u.isActive,
+      }
+      const updated = await usersService.update(u.userID, payload)
+      setUsers((prev) => prev.map((item) => (item.userID === updated.userID ? updated : item)))
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not update user status."
+      alert(message)
+    } finally {
+      setTogglingId(null)
+    }
   }
 
   return (
@@ -3388,107 +4363,156 @@ export default function UserAccountsPage() {
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-6 py-3 font-medium">User</th>
-                <th className="px-6 py-3 font-medium">Email</th>
-                <th className="px-6 py-3 font-medium">Role</th>
-                <th className="px-6 py-3 font-medium">Pets</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-                <th className="px-6 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${u.avatarColor}`}>
-                        {getInitials(u.name)}
-                      </div>
-                      <span className="font-medium text-slate-900">{u.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-mono text-xs text-slate-500">{u.email}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`rounded-md px-2 py-1 text-xs font-medium ${
-                        u.role === "Admin / Vet"
-                          ? "bg-sky-100 text-sky-700"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}
-                    >
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{u.petsCount ?? "—"}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
-                        u.status === "Active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${u.status === "Active" ? "bg-emerald-500" : "bg-slate-400"}`} />
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <button
-                        className="text-slate-500 hover:text-teal-600"
-                        aria-label="Edit user"
-                        onClick={() => openEditModal(u)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        className="text-red-400 hover:text-red-600"
-                        aria-label="Toggle active status"
-                        onClick={() => toggleStatus(u.id)}
-                      >
-                        <UserX className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {isLoading && <p className="text-sm text-slate-500">Loading users...</p>}
 
-          {users.length === 0 && (
-            <p className="p-6 text-sm text-slate-500">No users yet.</p>
-          )}
-        </div>
+        {loadError && !isLoading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && (
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 font-medium">User</th>
+                  <th className="px-6 py-3 font-medium">Email</th>
+                  <th className="px-6 py-3 font-medium">Role</th>
+                  <th className="px-6 py-3 font-medium">Pets</th>
+                  <th className="px-6 py-3 font-medium">Status</th>
+                  <th className="px-6 py-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {users.map((u) => {
+                  const isSelf = currentUser?.id === u.userID
+                  const petCount = petsCountByUserId.get(u.userID) ?? 0
+                  return (
+                    <tr key={u.userID}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorForId(u.userID)}`}>
+                            {getInitials(u)}
+                          </div>
+                          <span className="font-medium text-slate-900">{displayName(u)}</span>
+                          {isSelf && <span className="text-xs text-slate-400">(you)</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-500">{u.email}</td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`rounded-md px-2 py-1 text-xs font-medium ${
+                            u.roleName === "Admin"
+                              ? "bg-sky-100 text-sky-700"
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {u.roleName ?? "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {u.roleName === "PetOwner" ? petCount : "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                            u.isActive
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${u.isActive ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          {u.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <button
+                            className="text-slate-500 hover:text-teal-600"
+                            aria-label="Edit user"
+                            onClick={() => openEditModal(u)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="text-red-400 hover:text-red-600 disabled:opacity-40"
+                            aria-label="Toggle active status"
+                            title={isSelf ? "You can't deactivate your own account" : undefined}
+                            disabled={isSelf || togglingId === u.userID}
+                            onClick={() => toggleStatus(u)}
+                          >
+                            {u.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {users.length === 0 && (
+              <p className="p-6 text-sm text-slate-500">No users yet.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-900">Add New User</h2>
-              <button onClick={closeModal} className="text-slate-400 hover:text-slate-700">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Add New User</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4 px-6 pb-6">
+            <form onSubmit={handleSave} className="space-y-4 p-6">
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Full Name
+                  Username
                 </label>
                 <input
                   type="text"
                   required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Full Name"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.firstName}
+                    onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.lastName}
+                    onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -3500,7 +4524,18 @@ export default function UserAccountsPage() {
                   required
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="Email Address"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
@@ -3510,12 +4545,14 @@ export default function UserAccountsPage() {
                   Role
                 </label>
                 <select
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value as UserAccount["role"] })}
+                  required
+                  value={form.roleID}
+                  onChange={(e) => setForm({ ...form, roleID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 >
-                  {roleOptions.map((r) => (
-                    <option key={r} value={r}>{r}</option>
+                  <option value="">— Select role —</option>
+                  {roles.map((r) => (
+                    <option key={r.roleID} value={r.roleID}>{r.roleName}</option>
                   ))}
                 </select>
               </div>
@@ -3527,18 +4564,20 @@ export default function UserAccountsPage() {
                 <input
                   type="password"
                   required
+                  minLength={6}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Password"
+                  placeholder="At least 6 characters"
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
               <button
                 type="submit"
-                className="h-11 w-full rounded-lg bg-gradient-to-r from-slate-900 to-teal-800 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                disabled={isSaving}
+                className="h-11 w-full rounded-lg bg-gradient-to-r from-slate-900 to-teal-800 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
               >
-                Create Account
+                {isSaving ? "Creating..." : "Create Account"}
               </button>
             </form>
           </div>
@@ -3548,8 +4587,8 @@ export default function UserAccountsPage() {
       {/* Edit User Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
               <h2 className="font-semibold text-white">Edit User</h2>
               <button onClick={closeEditModal} className="text-white/80 hover:text-white">
                 <X className="h-5 w-5" />
@@ -3557,17 +4596,48 @@ export default function UserAccountsPage() {
             </div>
 
             <form onSubmit={handleEditSave} className="space-y-4 p-6">
+              {editError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {editError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Full Name
+                  Username
                 </label>
                 <input
                   type="text"
                   required
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  value={editForm.username}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.firstName}
+                    onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.lastName}
+                    onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -3585,35 +4655,41 @@ export default function UserAccountsPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Role
+                  Phone
                 </label>
-                <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserAccount["role"] })}
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  {roleOptions.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                Leave password field empty to keep current password
+                />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  New Password (Optional)
+                  Role
                 </label>
-                <input
-                  type="password"
-                  value={editForm.newPassword}
-                  onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
-                  placeholder="Enter new password or leave blank"
+                <select
+                  required
+                  value={editForm.roleID}
+                  onChange={(e) => setEditForm({ ...editForm, roleID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                />
+                >
+                  {roles.map((r) => (
+                    <option key={r.roleID} value={r.roleID}>{r.roleName}</option>
+                  ))}
+                </select>
               </div>
+
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={editForm.isActive}
+                  onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/40"
+                />
+                Account is active
+              </label>
 
               <div className="flex gap-3 pt-2">
                 <button
@@ -3625,9 +4701,10 @@ export default function UserAccountsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                  disabled={isEditSaving}
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
-                  Save
+                  {isEditSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>
@@ -3640,50 +4717,25 @@ export default function UserAccountsPage() {
 </file>
 
 <file path="src/features/vaccinations/Vaccinationspage.tsx">
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X } from "lucide-react"
+import { vaccinationsService } from "@/services/vaccinations/vaccinations.service"
+import type { VaccinationReadDto, VaccinationCreateDto } from "@/services/vaccinations/vaccinations.dtos"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
+import { useAuth } from "@/services/auth/auth.service"
 
-interface Vaccination {
-  id: string
-  pet: string
-  avatarColor: string
-  vaccine: string
-  dateGiven: string
-  nextDue: string
-  batchNo: string
-  vet: string
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
 }
 
-const initialVaccinations: Vaccination[] = [
-  { id: "1", pet: "Luna", avatarColor: "bg-orange-200", vaccine: "Rabies", dateGiven: "2025-03-22", nextDue: "2026-03-22", batchNo: "RAB-2025-0441", vet: "Dr. James Park" },
-  { id: "2", pet: "Luna", avatarColor: "bg-orange-200", vaccine: "DHPP (Distemper/Parvo)", dateGiven: "2025-03-22", nextDue: "2026-03-22", batchNo: "DHPP-2025-1128", vet: "Dr. James Park" },
-  { id: "3", pet: "Luna", avatarColor: "bg-orange-200", vaccine: "Bordetella", dateGiven: "2024-10-05", nextDue: "2025-10-05", batchNo: "BOR-2024-0872", vet: "Dr. Sarah Reyes" },
-  { id: "4", pet: "Mochi", avatarColor: "bg-slate-300", vaccine: "FVRCP (Feline 3-in-1)", dateGiven: "2025-05-01", nextDue: "2026-05-01", batchNo: "FVR-2025-0503", vet: "Dr. Sarah Reyes" },
-  { id: "5", pet: "Titan", avatarColor: "bg-amber-300", vaccine: "Rabies", dateGiven: "2024-12-10", nextDue: "2025-12-10", batchNo: "RAB-2024-1901", vet: "Dr. James Park" },
-  { id: "6", pet: "Bella", avatarColor: "bg-yellow-200", vaccine: "Rabies", dateGiven: "2025-06-15", nextDue: "2026-06-15", batchNo: "RAB-2025-0819", vet: "Dr. Sarah Reyes" },
-  { id: "7", pet: "Bella", avatarColor: "bg-yellow-200", vaccine: "DHPP (Distemper/Parvo)", dateGiven: "2025-06-15", nextDue: "2026-06-15", batchNo: "DHPP-2025-2201", vet: "Dr. Sarah Reyes" },
-]
-
-const petOptions = [
-  { name: "Luna", avatarColor: "bg-orange-200" },
-  { name: "Mochi", avatarColor: "bg-slate-300" },
-  { name: "Titan", avatarColor: "bg-amber-300" },
-  { name: "Bella", avatarColor: "bg-yellow-200" },
-  { name: "Neko", avatarColor: "bg-slate-500" },
-]
-const vetOptions = ["Dr. Sarah Reyes", "Dr. James Park"]
-
-const emptyForm = {
-  pet: "",
-  vaccine: "",
-  dateGiven: new Date().toISOString().slice(0, 10),
-  nextDue: "",
-  batchNo: "",
-  vet: vetOptions[0],
-}
-
-function getStatus(nextDue: string): { label: string; className: string } {
+function getStatus(nextDue: string | null): { label: string; className: string } {
+  if (!nextDue) {
+    return { label: "—", className: "border-slate-200 bg-slate-50 text-slate-500" }
+  }
   const due = new Date(nextDue)
   const today = new Date()
   const daysUntilDue = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
@@ -3697,104 +4749,174 @@ function getStatus(nextDue: string): { label: string; className: string } {
   return { label: "Current", className: "border-emerald-300 bg-emerald-50 text-emerald-700" }
 }
 
-export default function Vaccinationspage() {
-  const [vaccinations, setVaccinations] = useState<Vaccination[]>(initialVaccinations)
+const emptyForm = {
+  petID: "",
+  vaccineType: "",
+  vaccinationDate: new Date().toISOString().slice(0, 10),
+  nextDueDate: "",
+  batchNumber: "",
+  notes: "",
+}
+
+export default function VaccinationsPage() {
+  const { isAdmin } = useAuth()
+
+  const [vaccinations, setVaccinations] = useState<VaccinationReadDto[]>([])
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [vaccinationsData, petsData] = await Promise.all([
+          vaccinationsService.getAll(),
+          petsService.getAll(),
+        ])
+        if (!cancelled) {
+          setVaccinations(vaccinationsData)
+          setPets(petsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load vaccinations."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
+    setSaveError("")
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.pet || !form.vaccine.trim() || !form.dateGiven || !form.vet) return
+    if (!form.petID || !form.vaccineType.trim() || !form.vaccinationDate) return
 
-    const petMatch = petOptions.find((p) => p.name === form.pet)
-
-    const newVaccination: Vaccination = {
-      id: crypto.randomUUID(),
-      pet: form.pet,
-      avatarColor: petMatch?.avatarColor ?? "bg-slate-300",
-      vaccine: form.vaccine.trim(),
-      dateGiven: form.dateGiven,
-      nextDue: form.nextDue || form.dateGiven,
-      batchNo: form.batchNo.trim() || "—",
-      vet: form.vet,
+    setIsSaving(true)
+    setSaveError("")
+    try {
+      const payload: VaccinationCreateDto = {
+        petID: Number(form.petID),
+        vaccineType: form.vaccineType.trim(),
+        vaccinationDate: form.vaccinationDate,
+        batchNumber: form.batchNumber.trim() || undefined,
+        nextDueDate: form.nextDueDate || null,
+        notes: form.notes.trim() || undefined,
+      }
+      const created = await vaccinationsService.create(payload)
+      setVaccinations((prev) =>
+        [...prev, created].sort((a, b) => (a.petName ?? "").localeCompare(b.petName ?? ""))
+      )
+      closeModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not save vaccination."
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
     }
-
-    setVaccinations((prev) =>
-      [...prev, newVaccination].sort((a, b) => a.pet.localeCompare(b.pet))
-    )
-    closeModal()
   }
 
   return (
     <AppShell>
       <div className="space-y-4 p-8">
-        <div className="flex justify-end">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Record Vaccination
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Record Vaccination
+            </button>
+          </div>
+        )}
 
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-6 py-3 font-medium">Pet</th>
-                <th className="px-6 py-3 font-medium">Vaccine</th>
-                <th className="px-6 py-3 font-medium">Date Given</th>
-                <th className="px-6 py-3 font-medium">Batch No.</th>
-                <th className="px-6 py-3 font-medium">Next Due</th>
-                <th className="px-6 py-3 font-medium">Vet</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {vaccinations.map((v) => {
-                const status = getStatus(v.nextDue)
-                return (
-                  <tr key={v.id}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className={`h-7 w-7 shrink-0 rounded-full ${v.avatarColor}`} />
-                        <span className="font-medium text-slate-900">{v.pet}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-900">{v.vaccine}</td>
-                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
-                      {v.dateGiven}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-teal-600">
-                      {v.batchNo}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
-                      {v.nextDue}
-                    </td>
-                    <td className="px-6 py-4 text-teal-700">{v.vet}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-block rounded-md border px-2 py-1 text-xs font-medium ${status.className}`}
-                      >
-                        {status.label}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        {isLoading && <p className="text-sm text-slate-500">Loading vaccinations...</p>}
 
-          {vaccinations.length === 0 && (
-            <p className="p-6 text-sm text-slate-500">No vaccination records yet.</p>
-          )}
-        </div>
+        {loadError && !isLoading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && (
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 font-medium">Pet</th>
+                  <th className="px-6 py-3 font-medium">Vaccine</th>
+                  <th className="px-6 py-3 font-medium">Date Given</th>
+                  <th className="px-6 py-3 font-medium">Batch No.</th>
+                  <th className="px-6 py-3 font-medium">Next Due</th>
+                  <th className="px-6 py-3 font-medium">Administered By</th>
+                  <th className="px-6 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {vaccinations.map((v) => {
+                  const status = getStatus(v.nextDueDate)
+                  return (
+                    <tr key={v.vaccinationID}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-7 w-7 shrink-0 rounded-full ${colorForId(v.petID)}`} />
+                          <span className="font-medium text-slate-900">{v.petName ?? "—"}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-900">{v.vaccineType}</td>
+                      <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
+                        {v.vaccinationDate}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-teal-600">
+                        {v.batchNumber ?? "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
+                        {v.nextDueDate ?? "—"}
+                      </td>
+                      <td className="px-6 py-4 text-teal-700">{v.administeredByName ?? "—"}</td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-block rounded-md border px-2 py-1 text-xs font-medium ${status.className}`}
+                        >
+                          {status.label}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {vaccinations.length === 0 && (
+              <p className="p-6 text-sm text-slate-500">No vaccination records yet.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Record Vaccination Modal */}
@@ -3809,19 +4931,25 @@ export default function Vaccinationspage() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 p-6">
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Pet
                 </label>
                 <select
                   required
-                  value={form.pet}
-                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  value={form.petID}
+                  onChange={(e) => setForm({ ...form, petID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 >
                   <option value="">— Select pet —</option>
-                  {petOptions.map((p) => (
-                    <option key={p.name} value={p.name}>{p.name}</option>
+                  {pets.map((p) => (
+                    <option key={p.petID} value={p.petID}>{p.name}</option>
                   ))}
                 </select>
               </div>
@@ -3833,8 +4961,8 @@ export default function Vaccinationspage() {
                 <input
                   type="text"
                   required
-                  value={form.vaccine}
-                  onChange={(e) => setForm({ ...form, vaccine: e.target.value })}
+                  value={form.vaccineType}
+                  onChange={(e) => setForm({ ...form, vaccineType: e.target.value })}
                   placeholder="e.g. Rabies, DHPP, FVRCP"
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
@@ -3848,8 +4976,8 @@ export default function Vaccinationspage() {
                   <input
                     type="date"
                     required
-                    value={form.dateGiven}
-                    onChange={(e) => setForm({ ...form, dateGiven: e.target.value })}
+                    value={form.vaccinationDate}
+                    onChange={(e) => setForm({ ...form, vaccinationDate: e.target.value })}
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                   />
                 </div>
@@ -3859,8 +4987,8 @@ export default function Vaccinationspage() {
                   </label>
                   <input
                     type="date"
-                    value={form.nextDue}
-                    onChange={(e) => setForm({ ...form, nextDue: e.target.value })}
+                    value={form.nextDueDate}
+                    onChange={(e) => setForm({ ...form, nextDueDate: e.target.value })}
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                   />
                 </div>
@@ -3872,8 +5000,8 @@ export default function Vaccinationspage() {
                 </label>
                 <input
                   type="text"
-                  value={form.batchNo}
-                  onChange={(e) => setForm({ ...form, batchNo: e.target.value })}
+                  value={form.batchNumber}
+                  onChange={(e) => setForm({ ...form, batchNumber: e.target.value })}
                   placeholder="e.g. RAB-2025-0441"
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
@@ -3881,18 +5009,15 @@ export default function Vaccinationspage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Attending Vet
+                  Notes
                 </label>
-                <select
-                  required
-                  value={form.vet}
-                  onChange={(e) => setForm({ ...form, vet: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  {vetOptions.map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  placeholder="Optional notes..."
+                  rows={2}
+                  className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -3905,9 +5030,10 @@ export default function Vaccinationspage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                  disabled={isSaving}
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
-                  Save
+                  {isSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>
@@ -4051,7 +5177,8 @@ createRoot(document.getElementById('root')!).render(
 <file path="src/services/apiConnection/api.ts">
 import axios, { type AxiosError } from "axios"
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
+//test
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://petvetmr.runasp.net"
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -4106,6 +5233,55 @@ export const api = {
     apiClient
       .post<T>(path, formData, { headers: { "Content-Type": "multipart/form-data" } })
       .then((res) => res.data),
+  getBlob: (path: string) =>
+    apiClient.get(path, { responseType: "blob" }).then((res) => res.data as Blob),
+}
+</file>
+
+<file path="src/services/appointments/appointments.dtos.ts">
+export interface AppointmentReadDto {
+  appointmentID: number
+  petID: number
+  petName: string | null
+  appointmentDateTime: string
+  reason: string | null
+  status: "Scheduled" | "Completed" | "Cancelled" | "NoShow"
+  notes: string | null
+  bookedByName: string | null
+  veterinarianUserID: number | null
+  veterinarianName: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AppointmentCreateDto {
+  petID: number
+  appointmentDateTime: string
+  reason?: string
+  veterinarianUserID?: number | null
+  notes?: string
+}
+
+export interface AppointmentUpdateDto {
+  appointmentDateTime: string
+  reason?: string
+  status: "Scheduled" | "Completed" | "Cancelled" | "NoShow"
+  veterinarianUserID?: number | null
+  notes?: string
+}
+</file>
+
+<file path="src/services/appointments/appointments.service.ts">
+import { api } from "../apiConnection/api"
+import type { AppointmentReadDto, AppointmentCreateDto, AppointmentUpdateDto } from "./appointments.dtos"
+
+export const appointmentsService = {
+  getAll: () => api.get<AppointmentReadDto[]>("/api/Appointments/GetAll"),
+  create: (payload: AppointmentCreateDto) =>
+    api.post<AppointmentReadDto>("/api/Appointments/Create", payload),
+  // Note: backend route has no slash before the id — "Update{id}", not "Update/{id}"
+  update: (id: number, payload: AppointmentUpdateDto) =>
+    api.put<AppointmentReadDto>(`/api/Appointments/Update${id}`, payload),
 }
 </file>
 
@@ -4157,14 +5333,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     const payload: LoginDto = { email, password }
-    const data = await api.post<AuthResponseDto>("/Auth/login", payload)
+    const data = await api.post<AuthResponseDto>("/api/Auth/login", payload)
     setToken(data.token)
     setUser(mapAuthResponseToUser(data))
     localStorage.setItem("token", data.token)
   }
 
   const register = async (payload: UserCreateDto) => {
-    await api.post<AuthResponseDto>("/Auth/register", payload)
+    await api.post<AuthResponseDto>("/api/Auth/register", payload)
   }
 
   const logout = () => {
@@ -4176,19 +5352,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   return createElement(
     AuthContext.Provider,
-    { 
-      value: { 
-        user, 
-        token, 
-        login, 
-        register, 
+    {
+      value: {
+        user,
+        token,
+        login,
+        register,
         logout,
         isAdmin: isAdminUser,
-        isOwner: !isAdminUser
-      } 
+        isOwner: !isAdminUser,
+      },
     },
     children
   )
+}
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider")
+  return ctx
 }
 </file>
 
@@ -4209,11 +5391,235 @@ export type AuthContextType = {
   login: (email: string, password: string) => Promise<void>
   register: (payload: UserCreateDto) => Promise<void>
   logout: () => void
+  isAdmin: boolean
+  isOwner: boolean
 }
 
 export type AuthProviderProps = { children: ReactNode }
 
 export const SELF_REGISTER_ROLE_ID = 2
+</file>
+
+<file path="src/services/documents/documents.dtos.ts">
+export interface DocumentsReadDto {
+  documentID: number
+  petID: number
+  petName: string | null
+  fileName: string
+  filePath: string
+  fileType: string | null
+  description: string | null
+  documentType: string | null
+  uploadedByUserID: number
+  uploadedByName: string | null
+  uploadedAt: string
+}
+</file>
+
+<file path="src/services/documents/documents.service.ts">
+import { api, apiClient } from "../apiConnection/api"
+import type { DocumentsReadDto } from "./documents.dtos"
+
+export const documentsService = {
+  getAll: () => api.get<DocumentsReadDto[]>("/api/Documents/GetAll"),
+
+  upload: (formData: FormData) =>
+    api.postForm<DocumentsReadDto>("/api/Documents/Create", formData),
+
+  download: async (id: number, fileName: string) => {
+    const response = await apiClient.get(`/api/Documents/Download${id}`, {
+      responseType: "blob",
+    })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement("a")
+    link.href = url
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  },
+}
+</file>
+
+<file path="src/services/medicalRecords/medicalRecords.dtos.ts">
+export interface MedicalRecordReadDto {
+  recordID: number
+  petID: number
+  petName: string | null
+  visitDate: string
+  diagnosis: string | null
+  treatment: string | null
+  notes: string | null
+  prescriptions: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface MedicalRecordCreateDto {
+  petID: number
+  visitDate: string
+  diagnosis?: string
+  treatment?: string
+  notes?: string
+  prescriptions?: string
+}
+</file>
+
+<file path="src/services/medicalRecords/medicalRecords.service.ts">
+import { api } from "../apiConnection/api"
+import type { MedicalRecordReadDto, MedicalRecordCreateDto } from "./medicalRecords.dtos"
+
+export const medicalRecordsService = {
+  getAll: () => api.get<MedicalRecordReadDto[]>("/api/MedicalRecords/GetAll"),
+  create: (payload: MedicalRecordCreateDto) =>
+    api.post<MedicalRecordReadDto>("/api/MedicalRecords/Create", payload),
+}
+</file>
+
+<file path="src/services/pets/pets.dtos.ts">
+export interface PetReadDto {
+  petID: number
+  name: string
+  breed: string | null
+  species: string
+  dateOfBirth: string | null
+  gender: string | null
+  color: string | null
+  microchipID: string | null
+  photoPath: string | null
+  ownerUserID: number
+  ownerName: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PetCreateDto {
+  name: string
+  breed?: string
+  species: string
+  dateOfBirth?: string | null
+  gender?: string | null
+  color?: string
+  microchipID?: string
+  ownerUserID?: number
+}
+</file>
+
+<file path="src/services/pets/pets.service.ts">
+import { api } from "../apiConnection/api"
+import type { PetReadDto, PetCreateDto } from "./pets.dtos"
+
+function buildPetFormData(payload: PetCreateDto, photo?: File | null): FormData {
+  const formData = new FormData()
+  formData.append("Name", payload.name)
+  formData.append("Species", payload.species)
+  if (payload.breed) formData.append("Breed", payload.breed)
+  if (payload.dateOfBirth) formData.append("DateOfBirth", payload.dateOfBirth)
+  if (payload.gender) formData.append("Gender", payload.gender)
+  if (payload.color) formData.append("Color", payload.color)
+  if (payload.microchipID) formData.append("MicrochipID", payload.microchipID)
+  // Admin must include this; PetOwner requests omit it and the server assigns the caller.
+  if (payload.ownerUserID) formData.append("OwnerUserID", String(payload.ownerUserID))
+  if (photo) formData.append("Photo", photo)
+  return formData
+}
+
+export const petsService = {
+  getAll: () => api.get<PetReadDto[]>("/api/Pets/GetAll"),
+  create: (payload: PetCreateDto, photo?: File | null) =>
+    api.postForm<PetReadDto>("/api/Pets/Create", buildPetFormData(payload, photo)),
+  getPhotoBlob: (petID: number) => api.getBlob(`/api/Pets/Photo${petID}`),
+}
+</file>
+
+<file path="src/services/roles/roles.dtos.ts">
+export interface RoleReadDto {
+  roleID: number
+  roleName: string
+  description: string | null
+}
+</file>
+
+<file path="src/services/roles/roles.service.ts">
+import { api } from "../apiConnection/api"
+import type { RoleReadDto } from "./roles.dtos"
+
+export const rolesService = {
+  getAll: () => api.get<RoleReadDto[]>("/api/Roles/Getall"),
+}
+</file>
+
+<file path="src/services/users/users.dtos.ts">
+export interface UserReadDto {
+  userID: number
+  username: string
+  email: string
+  lastName: string | null
+  firstName: string | null
+  phone: string | null
+  roleID: number
+  roleName: string | null
+  isActive: boolean
+  createdAt: string
+}
+
+export interface UserUpdateDto {
+  username: string
+  email: string
+  lastName?: string
+  firstName?: string
+  phone?: string
+  roleID: number
+  isActive: boolean
+}
+</file>
+
+<file path="src/services/users/users.service.ts">
+import { api } from "../apiConnection/api"
+import type { UserReadDto, UserUpdateDto } from "./users.dtos"
+
+export const usersService = {
+  getAll: () => api.get<UserReadDto[]>("/api/Users/GetAll"),
+  update: (id: number, payload: UserUpdateDto) =>
+    api.put<UserReadDto>(`/api/Users/Update${id}`, payload),
+}
+</file>
+
+<file path="src/services/vaccinations/vaccinations.dtos.ts">
+export interface VaccinationReadDto {
+  vaccinationID: number
+  petID: number
+  petName: string | null
+  vaccineType: string
+  vaccinationDate: string
+  batchNumber: string | null
+  nextDueDate: string | null
+  administeredByUserID: number
+  administeredByName: string | null
+  notes: string | null
+  createdAt: string
+}
+
+export interface VaccinationCreateDto {
+  petID: number
+  vaccineType: string
+  vaccinationDate: string
+  batchNumber?: string
+  nextDueDate?: string | null
+  notes?: string
+}
+</file>
+
+<file path="src/services/vaccinations/vaccinations.service.ts">
+import { api } from "../apiConnection/api"
+import type { VaccinationReadDto, VaccinationCreateDto } from "./vaccinations.dtos"
+
+export const vaccinationsService = {
+  getAll: () => api.get<VaccinationReadDto[]>("/api/Vaccinations/GetAll"),
+  create: (payload: VaccinationCreateDto) =>
+    api.post<VaccinationReadDto>("/api/Vaccinations/Create", payload),
+}
 </file>
 
 <file path="tsconfig.app.json">

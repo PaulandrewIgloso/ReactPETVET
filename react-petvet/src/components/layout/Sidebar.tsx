@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/services/auth/auth.service"
-import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut,} from "lucide-react"
+import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut } from "lucide-react"
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -12,13 +12,27 @@ const navItems = [
   { label: "User Accounts", icon: Users, href: "/users" },
 ]
 
+const adminOnlyPaths = new Set(["/pets", "/users"])
+
+const roleLabels: Record<string, string> = {
+  Admin: "Administrator",
+  PetOwner: "Pet Owner",
+}
+
+function getInitials(name: string) {
+  return name.slice(0, 2).toUpperCase()
+}
+
 export function Sidebar() {
   const location = useLocation()
-  const { logout } = useAuth()
+  const { logout, user, isAdmin } = useAuth()
+
+  const displayName = user?.username ?? "Guest"
+  const roleLabel = user?.role ? roleLabels[user.role] ?? user.role : "—"
+  const visibleNavItems = navItems.filter((item) => isAdmin || !adminOnlyPaths.has(item.href))
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 flex-col bg-slate-950 text-slate-300">
-      {/* Logo */}
       <div className="flex items-center gap-2 border-b border-white/10 px-5 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-green-500">
           <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
@@ -29,9 +43,8 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = item.href === location.pathname
           const Icon = item.icon
           return (
@@ -51,17 +64,16 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User footer */}
       <div className="border-t border-white/10 p-4">
         <div className="mb-2 flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
-            DS
+            {getInitials(displayName)}
           </div>
-          <div className="leading-tight">
-            <div className="text-sm font-semibold text-white">Dr. Sarah Reyes</div>
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-sm font-semibold text-white">{displayName}</div>
             <div className="flex items-center gap-1 text-xs text-emerald-400">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Administrator
+              {roleLabel}
             </div>
           </div>
         </div>

@@ -1,31 +1,24 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
-import { Plus, X, Pencil, UserX } from "lucide-react"
+import { Plus, X, Pencil, UserX, UserCheck } from "lucide-react"
+import { usersService } from "@/services/users/users.service"
+import type { UserReadDto, UserUpdateDto } from "@/services/users/users.dtos"
+import { rolesService } from "@/services/roles/roles.service"
+import type { RoleReadDto } from "@/services/roles/roles.dtos"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
+import { useAuth } from "@/services/auth/auth.service"
+import type { UserCreateDto } from "@/services/auth/auth.dtos"
 
-interface UserAccount {
-  id: string
-  name: string
-  email: string
-  role: "Admin / Vet" | "Pet Owner"
-  petsCount: number | null
-  status: "Active" | "Inactive"
-  avatarColor: string
-}
-
-const initialUsers: UserAccount[] = [
-  { id: "1", name: "Dr. Sarah Reyes", email: "admin@petvet.com", role: "Admin / Vet", petsCount: null, status: "Active", avatarColor: "bg-teal-600" },
-  { id: "2", name: "Carlos Mendez", email: "carlos@example.com", role: "Pet Owner", petsCount: 2, status: "Active", avatarColor: "bg-emerald-500" },
-  { id: "3", name: "Ana Torres", email: "ana@example.com", role: "Pet Owner", petsCount: 2, status: "Active", avatarColor: "bg-sky-500" },
-  { id: "4", name: "Dr. James Park", email: "jpark@petvet.com", role: "Admin / Vet", petsCount: null, status: "Active", avatarColor: "bg-indigo-600" },
-  { id: "5", name: "Maria Santos", email: "maria@example.com", role: "Pet Owner", petsCount: 1, status: "Active", avatarColor: "bg-green-600" },
-]
-
-const roleOptions: UserAccount["role"][] = ["Admin / Vet", "Pet Owner"]
 const avatarColors = ["bg-teal-600", "bg-emerald-500", "bg-sky-500", "bg-indigo-600", "bg-green-600", "bg-amber-500"]
 
-function getInitials(name: string) {
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
+}
+
+function getInitials(user: UserReadDto) {
+  const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username
   return name
-    .replace(/^Dr\.\s*/, "")
     .split(" ")
     .map((p) => p[0])
     .join("")
@@ -33,95 +26,207 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
+function displayName(user: UserReadDto) {
+  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username
+}
+
 const emptyForm = {
-  name: "",
+  username: "",
   email: "",
-  role: "Pet Owner" as UserAccount["role"],
+  firstName: "",
+  lastName: "",
+  phone: "",
+  roleID: "",
   password: "",
 }
 
 const emptyEditForm = {
-  id: "",
-  name: "",
+  userID: 0,
+  username: "",
   email: "",
-  role: "Pet Owner" as UserAccount["role"],
-  newPassword: "",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  roleID: "",
+  isActive: true,
 }
 
 export default function UserAccountsPage() {
-  const [users, setUsers] = useState<UserAccount[]>(initialUsers)
+  const { register, user: currentUser } = useAuth()
 
-  // Add User modal state
+  const [users, setUsers] = useState<UserReadDto[]>([])
+  const [roles, setRoles] = useState<RoleReadDto[]>([])
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
 
-  // Edit User modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editForm, setEditForm] = useState(emptyEditForm)
+  const [isEditSaving, setIsEditSaving] = useState(false)
+  const [editError, setEditError] = useState("")
+
+  const [togglingId, setTogglingId] = useState<number | null>(null)
+
+  const loadUsers = async () => {
+    const data = await usersService.getAll()
+    setUsers(data)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [usersData, rolesData, petsData] = await Promise.all([
+          usersService.getAll(),
+          rolesService.getAll(),
+          petsService.getAll(),
+        ])
+        if (!cancelled) {
+          setUsers(usersData)
+          setRoles(rolesData)
+          setPets(petsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load users."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const petsCountByUserId = useMemo(() => {
+    const map = new Map<number, number>()
+    pets.forEach((p) => map.set(p.ownerUserID, (map.get(p.ownerUserID) ?? 0) + 1))
+    return map
+  }, [pets])
 
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
+    setSaveError("")
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.email.trim() || !form.password) return
+    if (!form.username.trim() || !form.email.trim() || !form.password || !form.roleID) return
 
-    const newUser: UserAccount = {
-      id: crypto.randomUUID(),
-      name: form.name.trim(),
-      email: form.email.trim(),
-      role: form.role,
-      petsCount: form.role === "Pet Owner" ? 0 : null,
-      status: "Active",
-      avatarColor: avatarColors[users.length % avatarColors.length],
+    setIsSaving(true)
+    setSaveError("")
+    try {
+      const payload: UserCreateDto = {
+        username: form.username.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        firstName: form.firstName.trim() || undefined,
+        lastName: form.lastName.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        roleID: Number(form.roleID),
+      }
+      await register(payload)
+      await loadUsers()
+      closeModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not create user."
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
     }
-
-    setUsers((prev) => [...prev, newUser])
-    closeModal()
   }
 
-  const toggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id
-          ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
-          : u
-      )
-    )
-  }
-
-  const openEditModal = (user: UserAccount) => {
+  const openEditModal = (u: UserReadDto) => {
     setEditForm({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      newPassword: "",
+      userID: u.userID,
+      username: u.username,
+      email: u.email,
+      firstName: u.firstName ?? "",
+      lastName: u.lastName ?? "",
+      phone: u.phone ?? "",
+      roleID: String(u.roleID),
+      isActive: u.isActive,
     })
+    setEditError("")
     setIsEditModalOpen(true)
   }
 
   const closeEditModal = () => {
     setIsEditModalOpen(false)
     setEditForm(emptyEditForm)
+    setEditError("")
   }
 
-  const handleEditSave = (e: React.FormEvent) => {
+  const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editForm.name.trim() || !editForm.email.trim()) return
+    if (!editForm.username.trim() || !editForm.email.trim() || !editForm.roleID) return
 
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === editForm.id
-          ? { ...u, name: editForm.name.trim(), email: editForm.email.trim(), role: editForm.role }
-          : u
-      )
-    )
-    // editForm.newPassword, if set, would be sent to the backend here once connected —
-    // it's intentionally not stored anywhere in local state.
-    closeEditModal()
+    setIsEditSaving(true)
+    setEditError("")
+    try {
+      const payload: UserUpdateDto = {
+        username: editForm.username.trim(),
+        email: editForm.email.trim(),
+        firstName: editForm.firstName.trim() || undefined,
+        lastName: editForm.lastName.trim() || undefined,
+        phone: editForm.phone.trim() || undefined,
+        roleID: Number(editForm.roleID),
+        isActive: editForm.isActive,
+      }
+      const updated = await usersService.update(editForm.userID, payload)
+      setUsers((prev) => prev.map((u) => (u.userID === updated.userID ? updated : u)))
+      closeEditModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not update user."
+      setEditError(message)
+    } finally {
+      setIsEditSaving(false)
+    }
+  }
+
+  const toggleStatus = async (u: UserReadDto) => {
+    setTogglingId(u.userID)
+    try {
+      const payload: UserUpdateDto = {
+        username: u.username,
+        email: u.email,
+        firstName: u.firstName ?? undefined,
+        lastName: u.lastName ?? undefined,
+        phone: u.phone ?? undefined,
+        roleID: u.roleID,
+        isActive: !u.isActive,
+      }
+      const updated = await usersService.update(u.userID, payload)
+      setUsers((prev) => prev.map((item) => (item.userID === updated.userID ? updated : item)))
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not update user status."
+      alert(message)
+    } finally {
+      setTogglingId(null)
+    }
   }
 
   return (
@@ -137,107 +242,156 @@ export default function UserAccountsPage() {
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-6 py-3 font-medium">User</th>
-                <th className="px-6 py-3 font-medium">Email</th>
-                <th className="px-6 py-3 font-medium">Role</th>
-                <th className="px-6 py-3 font-medium">Pets</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-                <th className="px-6 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${u.avatarColor}`}>
-                        {getInitials(u.name)}
-                      </div>
-                      <span className="font-medium text-slate-900">{u.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-mono text-xs text-slate-500">{u.email}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`rounded-md px-2 py-1 text-xs font-medium ${
-                        u.role === "Admin / Vet"
-                          ? "bg-sky-100 text-sky-700"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}
-                    >
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{u.petsCount ?? "—"}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
-                        u.status === "Active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${u.status === "Active" ? "bg-emerald-500" : "bg-slate-400"}`} />
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <button
-                        className="text-slate-500 hover:text-teal-600"
-                        aria-label="Edit user"
-                        onClick={() => openEditModal(u)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        className="text-red-400 hover:text-red-600"
-                        aria-label="Toggle active status"
-                        onClick={() => toggleStatus(u.id)}
-                      >
-                        <UserX className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {isLoading && <p className="text-sm text-slate-500">Loading users...</p>}
 
-          {users.length === 0 && (
-            <p className="p-6 text-sm text-slate-500">No users yet.</p>
-          )}
-        </div>
+        {loadError && !isLoading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && (
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 font-medium">User</th>
+                  <th className="px-6 py-3 font-medium">Email</th>
+                  <th className="px-6 py-3 font-medium">Role</th>
+                  <th className="px-6 py-3 font-medium">Pets</th>
+                  <th className="px-6 py-3 font-medium">Status</th>
+                  <th className="px-6 py-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {users.map((u) => {
+                  const isSelf = currentUser?.id === u.userID
+                  const petCount = petsCountByUserId.get(u.userID) ?? 0
+                  return (
+                    <tr key={u.userID}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorForId(u.userID)}`}>
+                            {getInitials(u)}
+                          </div>
+                          <span className="font-medium text-slate-900">{displayName(u)}</span>
+                          {isSelf && <span className="text-xs text-slate-400">(you)</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-500">{u.email}</td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`rounded-md px-2 py-1 text-xs font-medium ${
+                            u.roleName === "Admin"
+                              ? "bg-sky-100 text-sky-700"
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {u.roleName ?? "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {u.roleName === "PetOwner" ? petCount : "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                            u.isActive
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${u.isActive ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          {u.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <button
+                            className="text-slate-500 hover:text-teal-600"
+                            aria-label="Edit user"
+                            onClick={() => openEditModal(u)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="text-red-400 hover:text-red-600 disabled:opacity-40"
+                            aria-label="Toggle active status"
+                            title={isSelf ? "You can't deactivate your own account" : undefined}
+                            disabled={isSelf || togglingId === u.userID}
+                            onClick={() => toggleStatus(u)}
+                          >
+                            {u.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {users.length === 0 && (
+              <p className="p-6 text-sm text-slate-500">No users yet.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-900">Add New User</h2>
-              <button onClick={closeModal} className="text-slate-400 hover:text-slate-700">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+              <h2 className="font-semibold text-white">Add New User</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4 px-6 pb-6">
+            <form onSubmit={handleSave} className="space-y-4 p-6">
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Full Name
+                  Username
                 </label>
                 <input
                   type="text"
                   required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Full Name"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.firstName}
+                    onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.lastName}
+                    onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -249,7 +403,18 @@ export default function UserAccountsPage() {
                   required
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="Email Address"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
@@ -259,12 +424,14 @@ export default function UserAccountsPage() {
                   Role
                 </label>
                 <select
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value as UserAccount["role"] })}
+                  required
+                  value={form.roleID}
+                  onChange={(e) => setForm({ ...form, roleID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 >
-                  {roleOptions.map((r) => (
-                    <option key={r} value={r}>{r}</option>
+                  <option value="">— Select role —</option>
+                  {roles.map((r) => (
+                    <option key={r.roleID} value={r.roleID}>{r.roleName}</option>
                   ))}
                 </select>
               </div>
@@ -276,18 +443,20 @@ export default function UserAccountsPage() {
                 <input
                   type="password"
                   required
+                  minLength={6}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Password"
+                  placeholder="At least 6 characters"
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
 
               <button
                 type="submit"
-                className="h-11 w-full rounded-lg bg-gradient-to-r from-slate-900 to-teal-800 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                disabled={isSaving}
+                className="h-11 w-full rounded-lg bg-gradient-to-r from-slate-900 to-teal-800 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
               >
-                Create Account
+                {isSaving ? "Creating..." : "Create Account"}
               </button>
             </form>
           </div>
@@ -297,8 +466,8 @@ export default function UserAccountsPage() {
       {/* Edit User Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
+            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
               <h2 className="font-semibold text-white">Edit User</h2>
               <button onClick={closeEditModal} className="text-white/80 hover:text-white">
                 <X className="h-5 w-5" />
@@ -306,17 +475,48 @@ export default function UserAccountsPage() {
             </div>
 
             <form onSubmit={handleEditSave} className="space-y-4 p-6">
+              {editError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {editError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Full Name
+                  Username
                 </label>
                 <input
                   type="text"
                   required
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  value={editForm.username}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.firstName}
+                    onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.lastName}
+                    onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -334,35 +534,41 @@ export default function UserAccountsPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Role
+                  Phone
                 </label>
-                <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserAccount["role"] })}
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  {roleOptions.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                Leave password field empty to keep current password
+                />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  New Password (Optional)
+                  Role
                 </label>
-                <input
-                  type="password"
-                  value={editForm.newPassword}
-                  onChange={(e) => setEditForm({ ...editForm, newPassword: e.target.value })}
-                  placeholder="Enter new password or leave blank"
+                <select
+                  required
+                  value={editForm.roleID}
+                  onChange={(e) => setEditForm({ ...editForm, roleID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                />
+                >
+                  {roles.map((r) => (
+                    <option key={r.roleID} value={r.roleID}>{r.roleName}</option>
+                  ))}
+                </select>
               </div>
+
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={editForm.isActive}
+                  onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/40"
+                />
+                Account is active
+              </label>
 
               <div className="flex gap-3 pt-2">
                 <button
@@ -374,9 +580,10 @@ export default function UserAccountsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                  disabled={isEditSaving}
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
-                  Save
+                  {isEditSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>

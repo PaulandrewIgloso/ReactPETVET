@@ -22,5 +22,5 @@ export interface PetCreateDto {
   gender?: string | null
   color?: string
   microchipID?: string
-  ownerUserID: number
+  ownerUserID?: number
 }

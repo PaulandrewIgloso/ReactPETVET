@@ -1,52 +1,85 @@
-import { useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, Eye, X } from "lucide-react"
+import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
+import type { MedicalRecordReadDto, MedicalRecordCreateDto } from "@/services/medicalRecords/medicalRecords.dtos"
+import { petsService } from "@/services/pets/pets.service"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
+import { useAuth } from "@/services/auth/auth.service"
 
-interface MedicalRecord {
-  id: string
-  date: string
-  pet: string
-  avatarColor: string
-  diagnosis: string
-  treatment: string
-  notes: string
-  vet: string
-  prescriptions: string[]
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
 }
 
-const initialRecords: MedicalRecord[] = [
-  { id: "1", date: "2025-06-10", pet: "Luna", avatarColor: "bg-orange-200", diagnosis: "Mild dermatitis, secondary bacterial infection", treatment: "Topical antibiotic cream, medicated shampoo 2x/week", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["Cephalexin 250mg – BID x 10 days", "Medicated shampoo"] },
-  { id: "2", date: "2025-03-22", pet: "Luna", avatarColor: "bg-orange-200", diagnosis: "Annual wellness check — no issues found", treatment: "Preventive care, heartworm test negative", notes: "", vet: "Dr. James Park", prescriptions: ["Heartgard Plus – monthly"] },
-  { id: "3", date: "2025-05-18", pet: "Mochi", avatarColor: "bg-slate-300", diagnosis: "Upper respiratory infection (viral)", treatment: "Supportive care, hydration, appetite stimulant", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["Mirtazapine 1.88mg – q72h", "Sub-Q fluids"] },
-  { id: "4", date: "2025-06-01", pet: "Titan", avatarColor: "bg-amber-300", diagnosis: "Cruciate ligament strain, left stifle", treatment: "NSAIDs, restricted activity 4 weeks, physio referral", notes: "", vet: "Dr. James Park", prescriptions: ["Carprofen 75mg – BID x 14 days", "Physio referral"] },
-  { id: "5", date: "2025-06-15", pet: "Bella", avatarColor: "bg-yellow-200", diagnosis: "Routine puppy exam, 12 months", treatment: "Spay scheduled for July 2025", notes: "", vet: "Dr. Sarah Reyes", prescriptions: ["None"] },
-]
-
-const petOptions = ["Luna", "Mochi", "Titan", "Bella", "Neko"]
-const vetOptions = ["Dr. Sarah Reyes", "Dr. James Park"]
+function prescriptionList(prescriptions: string | null): string[] {
+  if (!prescriptions || !prescriptions.trim()) return []
+  return prescriptions.split(";").map((s) => s.trim()).filter(Boolean)
+}
 
 const emptyForm = {
-  pet: "",
-  date: new Date().toISOString().slice(0, 10),
+  petID: "",
+  visitDate: new Date().toISOString().slice(0, 10),
   diagnosis: "",
   treatment: "",
   notes: "",
-  vet: vetOptions[0],
 }
 
 export default function MedicalRecordsPage() {
-  const [records, setRecords] = useState<MedicalRecord[]>(initialRecords)
+  const { isAdmin } = useAuth()
+
+  const [records, setRecords] = useState<MedicalRecordReadDto[]>([])
+  const [pets, setPets] = useState<PetReadDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [prescriptions, setPrescriptions] = useState<string[]>([])
   const [rxDraft, setRxDraft] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setIsLoading(true)
+      setLoadError("")
+      try {
+        const [recordsData, petsData] = await Promise.all([
+          medicalRecordsService.getAll(),
+          petsService.getAll(),
+        ])
+        if (!cancelled) {
+          setRecords(recordsData)
+          setPets(petsData)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            typeof err === "object" && err && "message" in err
+              ? String((err as { message: unknown }).message)
+              : "Failed to load medical records."
+          setLoadError(message)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const closeModal = () => {
     setIsModalOpen(false)
     setForm(emptyForm)
     setPrescriptions([])
     setRxDraft("")
+    setSaveError("")
   }
 
   const addPrescription = () => {
@@ -55,114 +88,131 @@ export default function MedicalRecordsPage() {
     setRxDraft("")
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.pet || !form.date || !form.diagnosis.trim() || !form.vet) return
+    if (!form.petID || !form.visitDate || !form.diagnosis.trim()) return
 
-    const petAvatar =
-      initialRecords.find((r) => r.pet === form.pet)?.avatarColor ?? "bg-slate-300"
-
-    const newRecord: MedicalRecord = {
-      id: crypto.randomUUID(),
-      date: form.date,
-      pet: form.pet,
-      avatarColor: petAvatar,
-      diagnosis: form.diagnosis.trim(),
-      treatment: form.treatment.trim() || "—",
-      notes: form.notes.trim(),
-      vet: form.vet,
-      prescriptions: prescriptions.length ? prescriptions : ["None"],
+    setIsSaving(true)
+    setSaveError("")
+    try {
+      const payload: MedicalRecordCreateDto = {
+        petID: Number(form.petID),
+        visitDate: form.visitDate,
+        diagnosis: form.diagnosis.trim() || undefined,
+        treatment: form.treatment.trim() || undefined,
+        notes: form.notes.trim() || undefined,
+        prescriptions: prescriptions.length ? prescriptions.join("; ") : undefined,
+      }
+      const created = await medicalRecordsService.create(payload)
+      setRecords((prev) =>
+        [...prev, created].sort((a, b) => b.visitDate.localeCompare(a.visitDate))
+      )
+      closeModal()
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not save medical record."
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
     }
-
-    setRecords((prev) =>
-      [...prev, newRecord].sort((a, b) => b.date.localeCompare(a.date))
-    )
-    closeModal()
   }
 
   return (
     <AppShell>
       <div className="space-y-4 p-8">
-        <div className="flex justify-end">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New Record
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New Record
+            </button>
+          </div>
+        )}
 
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-6 py-3 font-medium">Date</th>
-                <th className="px-6 py-3 font-medium">Pet</th>
-                <th className="px-6 py-3 font-medium">Diagnosis</th>
-                <th className="px-6 py-3 font-medium">Vet</th>
-                <th className="px-6 py-3 font-medium">Prescriptions</th>
-                <th className="w-10 px-6 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {records.map((r) => (
-                <>
-                  <tr key={r.id} className="align-top">
-                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
-                      {r.date}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className={`h-7 w-7 shrink-0 rounded-full ${r.avatarColor}`} />
-                        <span className="font-medium text-slate-900">{r.pet}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{r.diagnosis}</div>
-                      <div className="text-xs text-teal-600">{r.treatment}</div>
-                    </td>
-                    <td className="px-6 py-4 text-teal-700">{r.vet}</td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {r.prescriptions.length === 1 && r.prescriptions[0] === "None"
-                        ? "0 rx"
-                        : `${r.prescriptions.length} rx`}
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
-                        className="text-teal-600 hover:text-teal-800"
-                        aria-label="View record details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                  {expandedId === r.id && (
-                    <tr className="bg-slate-50">
-                      <td colSpan={6} className="space-y-1 px-6 py-4 text-sm text-slate-600">
-                        {r.notes && (
-                          <div>
-                            <span className="font-semibold text-slate-800">Notes: </span>
-                            {r.notes}
+        {isLoading && <p className="text-sm text-slate-500">Loading records...</p>}
+
+        {loadError && !isLoading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
+
+        {!isLoading && !loadError && (
+          <div className="overflow-hidden rounded-2xl border bg-white">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 font-medium">Date</th>
+                  <th className="px-6 py-3 font-medium">Pet</th>
+                  <th className="px-6 py-3 font-medium">Diagnosis</th>
+                  <th className="px-6 py-3 font-medium">Prescriptions</th>
+                  <th className="w-10 px-6 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {records.map((r) => {
+                  const rx = prescriptionList(r.prescriptions)
+                  return (
+                    <Fragment key={r.recordID}>
+                      <tr className="align-top">
+                        <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
+                          {r.visitDate.slice(0, 10)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className={`h-7 w-7 shrink-0 rounded-full ${colorForId(r.petID)}`} />
+                            <span className="font-medium text-slate-900">{r.petName ?? "—"}</span>
                           </div>
-                        )}
-                        <div>
-                          <span className="font-semibold text-slate-800">Prescriptions: </span>
-                          {r.prescriptions.join(", ")}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-900">{r.diagnosis ?? "—"}</div>
+                          <div className="text-xs text-teal-600">{r.treatment ?? ""}</div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600">
+                          {rx.length === 0 ? "0 rx" : `${rx.length} rx`}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => setExpandedId(expandedId === r.recordID ? null : r.recordID)}
+                            className="text-teal-600 hover:text-teal-800"
+                            aria-label="View record details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedId === r.recordID && (
+                        <tr className="bg-slate-50">
+                          <td colSpan={5} className="space-y-1 px-6 py-4 text-sm text-slate-600">
+                            {r.notes && (
+                              <div>
+                                <span className="font-semibold text-slate-800">Notes: </span>
+                                {r.notes}
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-semibold text-slate-800">Prescriptions: </span>
+                              {rx.length ? rx.join(", ") : "None"}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  )
+                })}
+              </tbody>
+            </table>
 
-          {records.length === 0 && (
-            <p className="p-6 text-sm text-slate-500">No records yet.</p>
-          )}
-        </div>
+            {records.length === 0 && (
+              <p className="p-6 text-sm text-slate-500">No records yet.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add Medical Record Modal */}
@@ -177,19 +227,25 @@ export default function MedicalRecordsPage() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4 p-6">
+              {saveError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Pet
                 </label>
                 <select
                   required
-                  value={form.pet}
-                  onChange={(e) => setForm({ ...form, pet: e.target.value })}
+                  value={form.petID}
+                  onChange={(e) => setForm({ ...form, petID: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 >
                   <option value="">— Select pet —</option>
-                  {petOptions.map((p) => (
-                    <option key={p} value={p}>{p}</option>
+                  {pets.map((p) => (
+                    <option key={p.petID} value={p.petID}>{p.name}</option>
                   ))}
                 </select>
               </div>
@@ -201,8 +257,8 @@ export default function MedicalRecordsPage() {
                 <input
                   type="date"
                   required
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  value={form.visitDate}
+                  onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
@@ -245,22 +301,6 @@ export default function MedicalRecordsPage() {
                   rows={2}
                   className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Attending Vet
-                </label>
-                <select
-                  required
-                  value={form.vet}
-                  onChange={(e) => setForm({ ...form, vet: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  {vetOptions.map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
               </div>
 
               <div className="space-y-1.5">
@@ -321,9 +361,10 @@ export default function MedicalRecordsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+                  disabled={isSaving}
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-teal-700 to-emerald-500 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
-                  Save
+                  {isSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>
