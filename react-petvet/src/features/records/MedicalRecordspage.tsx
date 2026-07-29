@@ -1,6 +1,7 @@
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, Eye, X } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
 import type { MedicalRecordReadDto, MedicalRecordCreateDto } from "@/services/medicalRecords/medicalRecords.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -81,6 +82,12 @@ export default function MedicalRecordsPage() {
     setRxDraft("")
     setSaveError("")
   }
+
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
+    return map
+  }, [pets])
 
   const addPrescription = () => {
     if (!rxDraft.trim()) return
@@ -165,7 +172,12 @@ export default function MedicalRecordsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <div className={`h-7 w-7 shrink-0 rounded-full ${colorForId(r.petID)}`} />
+                            <PetAvatar
+                              petID={r.petID}
+                              hasPhoto={hasPhotoByPetId.get(r.petID) ?? false}
+                              colorClassName={colorForId(r.petID)}
+                              className="h-7 w-7 shrink-0 rounded-full object-cover"
+                            />
                             <span className="font-medium text-slate-900">{r.petName ?? "—"}</span>
                           </div>
                         </td>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X, CheckCircle, Ban, UserX } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { appointmentsService } from "@/services/appointments/appointments.service"
 import type { AppointmentReadDto, AppointmentCreateDto, AppointmentUpdateDto } from "@/services/appointments/appointments.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -37,7 +38,14 @@ const emptyForm = {
   date: "",
   time: "09:00",
   reason: "",
+  veterinarianUserID: "",
 }
+
+const SPECIES_OPTIONS = ["Dog", "Cat", "Bird", "Rabbit", "Reptile", "Other"]
+const GENDER_OPTIONS = [
+  { value: "M", label: "Male" },
+  { value: "F", label: "Female" },
+]
 
 const emptyNewPetForm = {
   name: "",
@@ -66,7 +74,7 @@ export default function AppointmentsPage() {
   const [saveError, setSaveError] = useState("")
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
-  const [isAddingNewPet, setIsAddingNewPet] = useState(false)
+  const [petMode, setPetMode] = useState<"existing" | "new">("existing")
   const [newPetForm, setNewPetForm] = useState(emptyNewPetForm)
   const [newPetPhoto, setNewPetPhoto] = useState<File | null>(null)
 
@@ -76,22 +84,27 @@ export default function AppointmentsPage() {
       setIsLoading(true)
       setLoadError("")
       try {
-        const [appointmentsData, petsData] = await Promise.all([
+        // Users/GetAll is Admin-only on the backend, so non-admins would
+        // always get a 403 here. Only request it when it can succeed —
+        // non-admins never see the veterinarian picker anyway (it only
+        // appears in the admin-only Book Appointment modal below).
+        const [appointmentsResult, petsResult, usersResult] = await Promise.allSettled([
           appointmentsService.getAll(),
           petsService.getAll(),
+          isAdmin ? usersService.getAll() : Promise.resolve<UserReadDto[]>([]),
         ])
-        if (!cancelled) {
-          setAppointments(appointmentsData)
-          setPets(petsData)
-        }
-        // Vet list is only needed to populate the "assign a vet" dropdown;
-        // PetOwner may not have access to it, so don't let that block the page.
-        try {
-          const usersData = await usersService.getAll()
-          if (!cancelled) setUsers(usersData)
-        } catch {
-          if (!cancelled) setUsers([])
-        }
+
+        if (cancelled) return
+
+        // Appointments and pets are required for the page to render at all.
+        if (appointmentsResult.status === "rejected") throw appointmentsResult.reason
+        if (petsResult.status === "rejected") throw petsResult.reason
+
+        setAppointments(appointmentsResult.value)
+        setPets(petsResult.value)
+        // Users list is auxiliary (only used for the vet picker) — fall
+        // back to an empty list instead of blocking the whole page.
+        setUsers(usersResult.status === "fulfilled" ? usersResult.value : [])
       } catch (err) {
         if (!cancelled) {
           const message =
@@ -108,11 +121,17 @@ export default function AppointmentsPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isAdmin])
 
   const ownerNameByPetId = useMemo(() => {
     const map = new Map<number, string>()
     pets.forEach((p) => map.set(p.petID, p.ownerName ?? "—"))
+    return map
+  }, [pets])
+
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
     return map
   }, [pets])
 
@@ -134,48 +153,45 @@ export default function AppointmentsPage() {
     setIsModalOpen(false)
     setForm(emptyForm)
     setSaveError("")
-    setIsAddingNewPet(false)
+    setPetMode("existing")
     setNewPetForm(emptyNewPetForm)
     setNewPetPhoto(null)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (isAddingNewPet) {
-      if (!newPetForm.name.trim() || !form.date || !form.time) return
-      if (isAdmin && !newPetForm.ownerUserID) return
-    } else {
-      if (!form.petID || !form.date || !form.time) return
-    }
+    if (!form.date || !form.time) return
+    if (petMode === "existing" && !form.petID) return
+    if (petMode === "new" && !newPetForm.name.trim()) return
 
     setIsSaving(true)
     setSaveError("")
     try {
-      let petID = form.petID ? Number(form.petID) : null
+      let petID: number
 
-      if (isAddingNewPet) {
+      if (petMode === "new") {
         const petPayload: PetCreateDto = {
           name: newPetForm.name.trim(),
           species: newPetForm.species,
           breed: newPetForm.breed.trim() || undefined,
-          dateOfBirth: newPetForm.dateOfBirth || null,
-          gender: newPetForm.gender || null,
+          dateOfBirth: newPetForm.dateOfBirth || undefined,
+          gender: newPetForm.gender || undefined,
           color: newPetForm.color.trim() || undefined,
           microchipID: newPetForm.microchipID.trim() || undefined,
-          ownerUserID: isAdmin ? Number(newPetForm.ownerUserID) : undefined,
+          ownerUserID: isAdmin && newPetForm.ownerUserID ? Number(newPetForm.ownerUserID) : undefined,
         }
-        const newPet = await petsService.create(petPayload, newPetPhoto)
-        setPets((prev) => [newPet, ...prev])
-        petID = newPet.petID
+        const createdPet = await petsService.create(petPayload, newPetPhoto)
+        setPets((prev) => [...prev, createdPet])
+        petID = createdPet.petID
+      } else {
+        petID = Number(form.petID)
       }
-
-      if (!petID) return
 
       const payload: AppointmentCreateDto = {
         petID,
         appointmentDateTime: `${form.date}T${form.time}:00`,
         reason: form.reason.trim() || undefined,
+        veterinarianUserID: form.veterinarianUserID ? Number(form.veterinarianUserID) : null,
       }
       const created = await appointmentsService.create(payload)
       setAppointments((prev) => [...prev, created])
@@ -185,8 +201,8 @@ export default function AppointmentsPage() {
       const message =
         typeof err === "object" && err && "message" in err
           ? String((err as { message: unknown }).message)
-          : isAddingNewPet
-          ? "Could not save the new pet."
+          : petMode === "new"
+          ? "Could not add pet."
           : "Could not book appointment."
       setSaveError(message)
     } finally {
@@ -222,14 +238,14 @@ export default function AppointmentsPage() {
     }
   }
 
-  const handleAssignVeterinarian = async (a: AppointmentReadDto, veterinarianUserID: number | null) => {
+  const handleAssignVet = async (a: AppointmentReadDto, vetId: string) => {
     setUpdatingId(a.appointmentID)
     try {
       const payload: AppointmentUpdateDto = {
         appointmentDateTime: a.appointmentDateTime,
         reason: a.reason ?? undefined,
         status: a.status,
-        veterinarianUserID,
+        veterinarianUserID: vetId ? Number(vetId) : null,
         notes: a.notes ?? undefined,
       }
       const updated = await appointmentsService.update(a.appointmentID, payload)
@@ -299,7 +315,12 @@ export default function AppointmentsPage() {
                       <span className="text-lg font-bold leading-tight text-teal-700">{day}</span>
                       <span className="text-xs font-medium uppercase text-teal-500">{month}</span>
                     </div>
-                    <div className={`h-10 w-10 shrink-0 rounded-full ${colorForId(a.petID)}`} />
+                    <PetAvatar
+                      petID={a.petID}
+                      hasPhoto={hasPhotoByPetId.get(a.petID) ?? false}
+                      colorClassName={colorForId(a.petID)}
+                      className="h-10 w-10 shrink-0 rounded-full object-cover"
+                    />
                     <div>
                       <div className="text-sm font-semibold text-slate-900">
                         {a.petName ?? "—"} <span className="font-normal text-slate-400">—</span>{" "}
@@ -314,11 +335,9 @@ export default function AppointmentsPage() {
                       {isAdmin ? (
                         <select
                           value={a.veterinarianUserID ?? ""}
+                          onChange={(e) => handleAssignVet(a, e.target.value)}
                           disabled={updatingId === a.appointmentID}
-                          onChange={(e) =>
-                            handleAssignVeterinarian(a, e.target.value ? Number(e.target.value) : null)
-                          }
-                          className="mt-0.5 h-7 rounded-md border border-slate-200 bg-slate-50 px-1.5 text-xs text-teal-700 outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-60"
+                          className="mt-0.5 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-medium text-teal-700 outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-60"
                         >
                           <option value="">Unassigned</option>
                           {veterinarianOptions.map((u) => (
@@ -405,22 +424,51 @@ export default function AppointmentsPage() {
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Pet
-                  </label>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pet
+                </label>
+
+                {/* Sliding toggle between "Select Existing" and "Add New Pet" */}
+                <div className="relative grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-100 p-1">
+                  <span
+                    className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-md bg-white shadow-sm transition-transform duration-200 ease-out"
+                    style={{ transform: petMode === "new" ? "translateX(100%)" : "translateX(0)" }}
+                  />
                   <button
                     type="button"
-                    onClick={() => setIsAddingNewPet((prev) => !prev)}
-                    className="text-xs font-semibold text-teal-700 hover:underline"
+                    onClick={() => setPetMode("existing")}
+                    className={`relative z-10 rounded-md py-1.5 text-xs font-semibold transition-colors ${
+                      petMode === "existing" ? "text-teal-700" : "text-slate-500 hover:text-slate-700"
+                    }`}
                   >
-                    {isAddingNewPet ? "← Select existing pet" : "+ Add New Pet"}
+                    Select Existing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPetMode("new")}
+                    className={`relative z-10 rounded-md py-1.5 text-xs font-semibold transition-colors ${
+                      petMode === "new" ? "text-teal-700" : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    Add New Pet
                   </button>
                 </div>
 
-                {isAddingNewPet ? (
-                  <div className="space-y-4 rounded-lg border border-teal-100 bg-teal-50/40 p-4">
+                {petMode === "existing" ? (
+                  <select
+                    required
+                    value={form.petID}
+                    onChange={(e) => setForm({ ...form, petID: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Select pet —</option>
+                    {pets.map((p) => (
+                      <option key={p.petID} value={p.petID}>{p.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
                     <input
                       type="text"
                       required
@@ -436,9 +484,9 @@ export default function AppointmentsPage() {
                         onChange={(e) => setNewPetForm({ ...newPetForm, species: e.target.value })}
                         className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                       >
-                        <option value="Dog">Dog</option>
-                        <option value="Cat">Cat</option>
-                        <option value="Other">Other</option>
+                        {SPECIES_OPTIONS.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
                       </select>
                       <input
                         type="text"
@@ -461,9 +509,9 @@ export default function AppointmentsPage() {
                         onChange={(e) => setNewPetForm({ ...newPetForm, gender: e.target.value })}
                         className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                       >
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
-                        <option value="N">Neutered</option>
+                        {GENDER_OPTIONS.map((g) => (
+                          <option key={g.value} value={g.value}>{g.label}</option>
+                        ))}
                       </select>
                     </div>
 
@@ -486,7 +534,6 @@ export default function AppointmentsPage() {
 
                     {isAdmin && (
                       <select
-                        required
                         value={newPetForm.ownerUserID}
                         onChange={(e) => setNewPetForm({ ...newPetForm, ownerUserID: e.target.value })}
                         className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
@@ -498,28 +545,15 @@ export default function AppointmentsPage() {
                       </select>
                     )}
 
-                    <div>
+                    <div className="flex items-center gap-2 text-sm">
                       <input
                         type="file"
                         accept="image/*"
                         onChange={(e) => setNewPetPhoto(e.target.files?.[0] ?? null)}
-                        className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-200"
+                        className="text-xs text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
                       />
-                      {newPetPhoto && <p className="mt-1 text-xs text-slate-500">{newPetPhoto.name}</p>}
                     </div>
                   </div>
-                ) : (
-                  <select
-                    required
-                    value={form.petID}
-                    onChange={(e) => setForm({ ...form, petID: e.target.value })}
-                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                  >
-                    <option value="">— Select pet —</option>
-                    {pets.map((p) => (
-                      <option key={p.petID} value={p.petID}>{p.name}</option>
-                    ))}
-                  </select>
                 )}
               </div>
 
@@ -562,6 +596,24 @@ export default function AppointmentsPage() {
                   className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                 />
               </div>
+
+              {isAdmin && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Veterinarian
+                  </label>
+                  <select
+                    value={form.veterinarianUserID}
+                    onChange={(e) => setForm({ ...form, veterinarianUserID: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Unassigned —</option>
+                    {veterinarianOptions.map((u) => (
+                      <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button

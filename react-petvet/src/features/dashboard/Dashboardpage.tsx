@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { PawPrint, ClipboardList, CalendarDays, Syringe } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { petsService } from "@/services/pets/pets.service"
 import type { PetReadDto } from "@/services/pets/pets.dtos"
 import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
@@ -9,6 +10,12 @@ import { vaccinationsService } from "@/services/vaccinations/vaccinations.servic
 import type { VaccinationReadDto } from "@/services/vaccinations/vaccinations.dtos"
 import { appointmentsService } from "@/services/appointments/appointments.service"
 import type { AppointmentReadDto } from "@/services/appointments/appointments.dtos"
+
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
+}
 
 function daysUntil(dateStr: string): number {
   const due = new Date(dateStr)
@@ -109,6 +116,12 @@ export default function DashboardPage() {
   const ownerNameByPetId = useMemo(() => {
     const map = new Map<number, string>()
     pets.forEach((p) => map.set(p.petID, p.ownerName ?? "—"))
+    return map
+  }, [pets])
+
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
     return map
   }, [pets])
 
@@ -258,7 +271,12 @@ export default function DashboardPage() {
                 return (
                   <div key={v.vaccinationID} className="flex items-center justify-between px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-slate-200" />
+                      <PetAvatar
+                        petID={v.petID}
+                        hasPhoto={hasPhotoByPetId.get(v.petID) ?? false}
+                        colorClassName={colorForId(v.petID)}
+                        className="h-9 w-9 rounded-full object-cover"
+                      />
                       <div>
                         <div className="text-sm font-semibold text-slate-900">{v.petName ?? "—"}</div>
                         <div className="text-xs text-slate-500">{v.vaccineType}</div>
@@ -305,7 +323,12 @@ export default function DashboardPage() {
               {recentPatients.map((p) => (
                 <tr key={p.petID}>
                   <td className="flex items-center gap-3 px-5 py-3">
-                    <div className="h-9 w-9 rounded-full bg-slate-200" />
+                    <PetAvatar
+                      petID={p.petID}
+                      hasPhoto={!!p.photoPath}
+                      colorClassName={colorForId(p.petID)}
+                      className="h-9 w-9 rounded-full object-cover"
+                    />
                     <div>
                       <div className="font-semibold text-slate-900">{p.name}</div>
                       <div className="text-xs text-slate-500">

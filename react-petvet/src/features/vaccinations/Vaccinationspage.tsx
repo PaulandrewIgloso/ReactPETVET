@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { vaccinationsService } from "@/services/vaccinations/vaccinations.service"
 import type { VaccinationReadDto, VaccinationCreateDto } from "@/services/vaccinations/vaccinations.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -90,6 +91,12 @@ export default function VaccinationsPage() {
     setSaveError("")
   }
 
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
+    return map
+  }, [pets])
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.petID || !form.vaccineType.trim() || !form.vaccinationDate) return
@@ -165,7 +172,12 @@ export default function VaccinationsPage() {
                     <tr key={v.vaccinationID}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <div className={`h-7 w-7 shrink-0 rounded-full ${colorForId(v.petID)}`} />
+                          <PetAvatar
+                            petID={v.petID}
+                            hasPhoto={hasPhotoByPetId.get(v.petID) ?? false}
+                            colorClassName={colorForId(v.petID)}
+                            className="h-7 w-7 shrink-0 rounded-full object-cover"
+                          />
                           <span className="font-medium text-slate-900">{v.petName ?? "—"}</span>
                         </div>
                       </td>

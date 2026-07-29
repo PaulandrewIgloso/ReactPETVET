@@ -1899,10 +1899,11 @@ export { Label }
 import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X, CheckCircle, Ban, UserX } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { appointmentsService } from "@/services/appointments/appointments.service"
 import type { AppointmentReadDto, AppointmentCreateDto, AppointmentUpdateDto } from "@/services/appointments/appointments.dtos"
 import { petsService } from "@/services/pets/pets.service"
-import type { PetReadDto, PetCreateDto } from "@/services/pets/pets.dtos"
+import type { PetReadDto } from "@/services/pets/pets.dtos"
 import { usersService } from "@/services/users/users.service"
 import type { UserReadDto } from "@/services/users/users.dtos"
 import { useAuth } from "@/services/auth/auth.service"
@@ -1935,17 +1936,7 @@ const emptyForm = {
   date: "",
   time: "09:00",
   reason: "",
-}
-
-const emptyNewPetForm = {
-  name: "",
-  species: "Dog",
-  breed: "",
-  dateOfBirth: "",
-  gender: "M",
-  color: "",
-  microchipID: "",
-  ownerUserID: "",
+  veterinarianUserID: "",
 }
 
 export default function AppointmentsPage() {
@@ -1964,31 +1955,21 @@ export default function AppointmentsPage() {
   const [saveError, setSaveError] = useState("")
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
-  const [isAddingNewPet, setIsAddingNewPet] = useState(false)
-  const [newPetForm, setNewPetForm] = useState(emptyNewPetForm)
-  const [newPetPhoto, setNewPetPhoto] = useState<File | null>(null)
-
   useEffect(() => {
     let cancelled = false
     async function load() {
       setIsLoading(true)
       setLoadError("")
       try {
-        const [appointmentsData, petsData] = await Promise.all([
+        const [appointmentsData, petsData, usersData] = await Promise.all([
           appointmentsService.getAll(),
           petsService.getAll(),
+          usersService.getAll(),
         ])
         if (!cancelled) {
           setAppointments(appointmentsData)
           setPets(petsData)
-        }
-        // Vet list is only needed to populate the "assign a vet" dropdown;
-        // PetOwner may not have access to it, so don't let that block the page.
-        try {
-          const usersData = await usersService.getAll()
-          if (!cancelled) setUsers(usersData)
-        } catch {
-          if (!cancelled) setUsers([])
+          setUsers(usersData)
         }
       } catch (err) {
         if (!cancelled) {
@@ -2014,13 +1995,14 @@ export default function AppointmentsPage() {
     return map
   }, [pets])
 
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
+    return map
+  }, [pets])
+
   const veterinarianOptions = useMemo(
     () => users.filter((u) => u.roleName === "Admin"),
-    [users]
-  )
-
-  const ownerOptions = useMemo(
-    () => users.filter((u) => u.roleName === "PetOwner"),
     [users]
   )
 
@@ -2032,48 +2014,20 @@ export default function AppointmentsPage() {
     setIsModalOpen(false)
     setForm(emptyForm)
     setSaveError("")
-    setIsAddingNewPet(false)
-    setNewPetForm(emptyNewPetForm)
-    setNewPetPhoto(null)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (isAddingNewPet) {
-      if (!newPetForm.name.trim() || !form.date || !form.time) return
-      if (isAdmin && !newPetForm.ownerUserID) return
-    } else {
-      if (!form.petID || !form.date || !form.time) return
-    }
+    if (!form.petID || !form.date || !form.time) return
 
     setIsSaving(true)
     setSaveError("")
     try {
-      let petID = form.petID ? Number(form.petID) : null
-
-      if (isAddingNewPet) {
-        const petPayload: PetCreateDto = {
-          name: newPetForm.name.trim(),
-          species: newPetForm.species,
-          breed: newPetForm.breed.trim() || undefined,
-          dateOfBirth: newPetForm.dateOfBirth || null,
-          gender: newPetForm.gender || null,
-          color: newPetForm.color.trim() || undefined,
-          microchipID: newPetForm.microchipID.trim() || undefined,
-          ownerUserID: isAdmin ? Number(newPetForm.ownerUserID) : undefined,
-        }
-        const newPet = await petsService.create(petPayload, newPetPhoto)
-        setPets((prev) => [newPet, ...prev])
-        petID = newPet.petID
-      }
-
-      if (!petID) return
-
       const payload: AppointmentCreateDto = {
-        petID,
+        petID: Number(form.petID),
         appointmentDateTime: `${form.date}T${form.time}:00`,
         reason: form.reason.trim() || undefined,
+        veterinarianUserID: form.veterinarianUserID ? Number(form.veterinarianUserID) : null,
       }
       const created = await appointmentsService.create(payload)
       setAppointments((prev) => [...prev, created])
@@ -2083,8 +2037,6 @@ export default function AppointmentsPage() {
       const message =
         typeof err === "object" && err && "message" in err
           ? String((err as { message: unknown }).message)
-          : isAddingNewPet
-          ? "Could not save the new pet."
           : "Could not book appointment."
       setSaveError(message)
     } finally {
@@ -2120,31 +2072,6 @@ export default function AppointmentsPage() {
     }
   }
 
-  const handleAssignVeterinarian = async (a: AppointmentReadDto, veterinarianUserID: number | null) => {
-    setUpdatingId(a.appointmentID)
-    try {
-      const payload: AppointmentUpdateDto = {
-        appointmentDateTime: a.appointmentDateTime,
-        reason: a.reason ?? undefined,
-        status: a.status,
-        veterinarianUserID,
-        notes: a.notes ?? undefined,
-      }
-      const updated = await appointmentsService.update(a.appointmentID, payload)
-      setAppointments((prev) =>
-        prev.map((item) => (item.appointmentID === updated.appointmentID ? updated : item))
-      )
-    } catch (err) {
-      const message =
-        typeof err === "object" && err && "message" in err
-          ? String((err as { message: unknown }).message)
-          : "Could not assign veterinarian."
-      alert(message)
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
   return (
     <AppShell>
       <div className="space-y-4 p-8">
@@ -2165,13 +2092,15 @@ export default function AppointmentsPage() {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Book Appointment
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Book Appointment
+            </button>
+          )}
         </div>
 
         {isLoading && <p className="text-sm text-slate-500">Loading appointments...</p>}
@@ -2197,7 +2126,12 @@ export default function AppointmentsPage() {
                       <span className="text-lg font-bold leading-tight text-teal-700">{day}</span>
                       <span className="text-xs font-medium uppercase text-teal-500">{month}</span>
                     </div>
-                    <div className={`h-10 w-10 shrink-0 rounded-full ${colorForId(a.petID)}`} />
+                    <PetAvatar
+                      petID={a.petID}
+                      hasPhoto={hasPhotoByPetId.get(a.petID) ?? false}
+                      colorClassName={colorForId(a.petID)}
+                      className="h-10 w-10 shrink-0 rounded-full object-cover"
+                    />
                     <div>
                       <div className="text-sm font-semibold text-slate-900">
                         {a.petName ?? "—"} <span className="font-normal text-slate-400">—</span>{" "}
@@ -2209,23 +2143,7 @@ export default function AppointmentsPage() {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <div className="text-sm font-semibold text-slate-900">{formatTime(a.appointmentDateTime)}</div>
-                      {isAdmin ? (
-                        <select
-                          value={a.veterinarianUserID ?? ""}
-                          disabled={updatingId === a.appointmentID}
-                          onChange={(e) =>
-                            handleAssignVeterinarian(a, e.target.value ? Number(e.target.value) : null)
-                          }
-                          className="mt-0.5 h-7 rounded-md border border-slate-200 bg-slate-50 px-1.5 text-xs text-teal-700 outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-60"
-                        >
-                          <option value="">Unassigned</option>
-                          {veterinarianOptions.map((u) => (
-                            <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="text-xs text-teal-600">{a.veterinarianName ?? "Unassigned"}</div>
-                      )}
+                      <div className="text-xs text-teal-600">{a.veterinarianName ?? "Unassigned"}</div>
                     </div>
                     <span
                       className={`rounded-md border px-3 py-1 text-xs font-medium ${
@@ -2304,121 +2222,20 @@ export default function AppointmentsPage() {
               )}
 
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Pet
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingNewPet((prev) => !prev)}
-                    className="text-xs font-semibold text-teal-700 hover:underline"
-                  >
-                    {isAddingNewPet ? "← Select existing pet" : "+ Add New Pet"}
-                  </button>
-                </div>
-
-                {isAddingNewPet ? (
-                  <div className="space-y-4 rounded-lg border border-teal-100 bg-teal-50/40 p-4">
-                    <input
-                      type="text"
-                      required
-                      value={newPetForm.name}
-                      onChange={(e) => setNewPetForm({ ...newPetForm, name: e.target.value })}
-                      placeholder="Pet name"
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                    />
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <select
-                        value={newPetForm.species}
-                        onChange={(e) => setNewPetForm({ ...newPetForm, species: e.target.value })}
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                      >
-                        <option value="Dog">Dog</option>
-                        <option value="Cat">Cat</option>
-                        <option value="Other">Other</option>
-                      </select>
-                      <input
-                        type="text"
-                        value={newPetForm.breed}
-                        onChange={(e) => setNewPetForm({ ...newPetForm, breed: e.target.value })}
-                        placeholder="Breed"
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="date"
-                        value={newPetForm.dateOfBirth}
-                        onChange={(e) => setNewPetForm({ ...newPetForm, dateOfBirth: e.target.value })}
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                      />
-                      <select
-                        value={newPetForm.gender}
-                        onChange={(e) => setNewPetForm({ ...newPetForm, gender: e.target.value })}
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                      >
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
-                        <option value="N">Neutered</option>
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={newPetForm.color}
-                        onChange={(e) => setNewPetForm({ ...newPetForm, color: e.target.value })}
-                        placeholder="Color"
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                      />
-                      <input
-                        type="text"
-                        value={newPetForm.microchipID}
-                        onChange={(e) => setNewPetForm({ ...newPetForm, microchipID: e.target.value })}
-                        placeholder="Microchip ID (optional)"
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                      />
-                    </div>
-
-                    {isAdmin && (
-                      <select
-                        required
-                        value={newPetForm.ownerUserID}
-                        onChange={(e) => setNewPetForm({ ...newPetForm, ownerUserID: e.target.value })}
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                      >
-                        <option value="">— Select owner —</option>
-                        {ownerOptions.map((u) => (
-                          <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
-                        ))}
-                      </select>
-                    )}
-
-                    <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setNewPetPhoto(e.target.files?.[0] ?? null)}
-                        className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-200"
-                      />
-                      {newPetPhoto && <p className="mt-1 text-xs text-slate-500">{newPetPhoto.name}</p>}
-                    </div>
-                  </div>
-                ) : (
-                  <select
-                    required
-                    value={form.petID}
-                    onChange={(e) => setForm({ ...form, petID: e.target.value })}
-                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                  >
-                    <option value="">— Select pet —</option>
-                    {pets.map((p) => (
-                      <option key={p.petID} value={p.petID}>{p.name}</option>
-                    ))}
-                  </select>
-                )}
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Pet
+                </label>
+                <select
+                  required
+                  value={form.petID}
+                  onChange={(e) => setForm({ ...form, petID: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  <option value="">— Select pet —</option>
+                  {pets.map((p) => (
+                    <option key={p.petID} value={p.petID}>{p.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -2461,6 +2278,22 @@ export default function AppointmentsPage() {
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Veterinarian
+                </label>
+                <select
+                  value={form.veterinarianUserID}
+                  onChange={(e) => setForm({ ...form, veterinarianUserID: e.target.value })}
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                >
+                  <option value="">— Unassigned —</option>
+                  {veterinarianOptions.map((u) => (
+                    <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -2490,6 +2323,7 @@ export default function AppointmentsPage() {
 import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { PawPrint, ClipboardList, CalendarDays, Syringe } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { petsService } from "@/services/pets/pets.service"
 import type { PetReadDto } from "@/services/pets/pets.dtos"
 import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
@@ -2498,6 +2332,12 @@ import { vaccinationsService } from "@/services/vaccinations/vaccinations.servic
 import type { VaccinationReadDto } from "@/services/vaccinations/vaccinations.dtos"
 import { appointmentsService } from "@/services/appointments/appointments.service"
 import type { AppointmentReadDto } from "@/services/appointments/appointments.dtos"
+
+const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
+
+function colorForId(id: number) {
+  return avatarColors[id % avatarColors.length]
+}
 
 function daysUntil(dateStr: string): number {
   const due = new Date(dateStr)
@@ -2598,6 +2438,12 @@ export default function DashboardPage() {
   const ownerNameByPetId = useMemo(() => {
     const map = new Map<number, string>()
     pets.forEach((p) => map.set(p.petID, p.ownerName ?? "—"))
+    return map
+  }, [pets])
+
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
     return map
   }, [pets])
 
@@ -2747,7 +2593,12 @@ export default function DashboardPage() {
                 return (
                   <div key={v.vaccinationID} className="flex items-center justify-between px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-slate-200" />
+                      <PetAvatar
+                        petID={v.petID}
+                        hasPhoto={hasPhotoByPetId.get(v.petID) ?? false}
+                        colorClassName={colorForId(v.petID)}
+                        className="h-9 w-9 rounded-full object-cover"
+                      />
                       <div>
                         <div className="text-sm font-semibold text-slate-900">{v.petName ?? "—"}</div>
                         <div className="text-xs text-slate-500">{v.vaccineType}</div>
@@ -2794,7 +2645,12 @@ export default function DashboardPage() {
               {recentPatients.map((p) => (
                 <tr key={p.petID}>
                   <td className="flex items-center gap-3 px-5 py-3">
-                    <div className="h-9 w-9 rounded-full bg-slate-200" />
+                    <PetAvatar
+                      petID={p.petID}
+                      hasPhoto={!!p.photoPath}
+                      colorClassName={colorForId(p.petID)}
+                      className="h-9 w-9 rounded-full object-cover"
+                    />
                     <div>
                       <div className="font-semibold text-slate-900">{p.name}</div>
                       <div className="text-xs text-slate-500">
@@ -3740,9 +3596,10 @@ export default function PetProfilesPage() {
 </file>
 
 <file path="src/features/records/MedicalRecordspage.tsx">
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, Eye, X } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
 import type { MedicalRecordReadDto, MedicalRecordCreateDto } from "@/services/medicalRecords/medicalRecords.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -3823,6 +3680,12 @@ export default function MedicalRecordsPage() {
     setRxDraft("")
     setSaveError("")
   }
+
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
+    return map
+  }, [pets])
 
   const addPrescription = () => {
     if (!rxDraft.trim()) return
@@ -3907,7 +3770,12 @@ export default function MedicalRecordsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <div className={`h-7 w-7 shrink-0 rounded-full ${colorForId(r.petID)}`} />
+                            <PetAvatar
+                              petID={r.petID}
+                              hasPhoto={hasPhotoByPetId.get(r.petID) ?? false}
+                              colorClassName={colorForId(r.petID)}
+                              className="h-7 w-7 shrink-0 rounded-full object-cover"
+                            />
                             <span className="font-medium text-slate-900">{r.petName ?? "—"}</span>
                           </div>
                         </td>
@@ -4717,9 +4585,10 @@ export default function UserAccountsPage() {
 </file>
 
 <file path="src/features/vaccinations/Vaccinationspage.tsx">
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X } from "lucide-react"
+import { PetAvatar } from "@/components/shared/PetAvatar"
 import { vaccinationsService } from "@/services/vaccinations/vaccinations.service"
 import type { VaccinationReadDto, VaccinationCreateDto } from "@/services/vaccinations/vaccinations.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -4809,6 +4678,12 @@ export default function VaccinationsPage() {
     setSaveError("")
   }
 
+  const hasPhotoByPetId = useMemo(() => {
+    const map = new Map<number, boolean>()
+    pets.forEach((p) => map.set(p.petID, !!p.photoPath))
+    return map
+  }, [pets])
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.petID || !form.vaccineType.trim() || !form.vaccinationDate) return
@@ -4884,7 +4759,12 @@ export default function VaccinationsPage() {
                     <tr key={v.vaccinationID}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <div className={`h-7 w-7 shrink-0 rounded-full ${colorForId(v.petID)}`} />
+                          <PetAvatar
+                            petID={v.petID}
+                            hasPhoto={hasPhotoByPetId.get(v.petID) ?? false}
+                            colorClassName={colorForId(v.petID)}
+                            className="h-7 w-7 shrink-0 rounded-full object-cover"
+                          />
                           <span className="font-medium text-slate-900">{v.petName ?? "—"}</span>
                         </div>
                       </td>
@@ -5231,8 +5111,8 @@ export const api = {
     apiClient.delete<T>(path).then((res) => res.data),
   postForm: <T>(path: string, formData: FormData) =>
     apiClient
-      .post<T>(path, formData, { headers: { "Content-Type": "multipart/form-data" } })
-      .then((res) => res.data),
+    .post<T>(path, formData, { headers: { "Content-Type": undefined } })
+    .then((res) => res.data),
   getBlob: (path: string) =>
     apiClient.get(path, { responseType: "blob" }).then((res) => res.data as Blob),
 }
@@ -5519,7 +5399,6 @@ function buildPetFormData(payload: PetCreateDto, photo?: File | null): FormData 
   if (payload.gender) formData.append("Gender", payload.gender)
   if (payload.color) formData.append("Color", payload.color)
   if (payload.microchipID) formData.append("MicrochipID", payload.microchipID)
-  // Admin must include this; PetOwner requests omit it and the server assigns the caller.
   if (payload.ownerUserID) formData.append("OwnerUserID", String(payload.ownerUserID))
   if (photo) formData.append("Photo", photo)
   return formData
