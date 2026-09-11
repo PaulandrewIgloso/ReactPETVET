@@ -31,8 +31,10 @@ apiClient.interceptors.response.use(
       error.response?.data?.message ??
       error.message ??
       "Something went wrong. Please try again."
+      
+    const isAuthEndpoint = error.config?.url?.includes("/api/Auth/")
 
-    if (status === 401) {
+    if (status === 401 && !isAuthEndpoint) {
       localStorage.removeItem("token")
       window.location.href = "/login"
     }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X, Pencil, UserX, UserCheck } from "lucide-react"
+import { Collapsible } from "@/components/ui/collapsible"
 import { usersService } from "@/services/users/users.service"
 import type { UserReadDto, UserUpdateDto } from "@/services/users/users.dtos"
 import { rolesService } from "@/services/roles/roles.service"
@@ -231,7 +232,7 @@ export default function UserAccountsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         <div className="flex justify-end">
           <button
             onClick={() => setIsModalOpen(true)}
@@ -252,7 +253,8 @@ export default function UserAccountsPage() {
 
         {!isLoading && !loadError && (
           <div className="overflow-hidden rounded-2xl border bg-white">
-            <table className="w-full text-left text-sm">
+            {/* Desktop / tablet table */}
+            <table className="hidden w-full text-left text-sm md:table">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-6 py-3 font-medium">User</th>
@@ -331,6 +333,83 @@ export default function UserAccountsPage() {
               </tbody>
             </table>
 
+            {/* Mobile: accordion cards */}
+            <div className="divide-y md:hidden">
+              {users.map((u) => {
+                const isSelf = currentUser?.id === u.userID
+                const petCount = petsCountByUserId.get(u.userID) ?? 0
+                return (
+                  <Collapsible
+                    key={u.userID}
+                    className="px-4 py-3"
+                    summaryClassName="py-1"
+                    contentClassName="space-y-2 pb-2 pt-3 text-sm text-slate-600"
+                    summary={
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorForId(u.userID)}`}>
+                          {getInitials(u)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold text-slate-900">
+                            {displayName(u)}
+                            {isSelf && <span className="ml-1 text-xs font-normal text-slate-400">(you)</span>}
+                          </div>
+                          <div className="truncate font-mono text-xs text-slate-500">{u.email}</div>
+                        </div>
+                        <span
+                          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                            u.isActive
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${u.isActive ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          {u.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-800">Role:</span>
+                      <span
+                        className={`rounded-md px-2 py-1 text-xs font-medium ${
+                          u.roleName === "Admin"
+                            ? "bg-sky-100 text-sky-700"
+                            : "bg-emerald-100 text-emerald-700"
+                        }`}
+                      >
+                        {u.roleName ?? "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Pets: </span>
+                      {u.roleName === "PetOwner" ? petCount : "—"}
+                    </div>
+                    <div className="flex items-center gap-4 pt-1">
+                      <button
+                        className="flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-900"
+                        aria-label="Edit user"
+                        onClick={() => openEditModal(u)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </button>
+                      <button
+                        className="flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-700 disabled:opacity-40"
+                        aria-label="Toggle active status"
+                        title={isSelf ? "You can't deactivate your own account" : undefined}
+                        disabled={isSelf || togglingId === u.userID}
+                        onClick={() => toggleStatus(u)}
+                      >
+                        {u.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                        {u.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </div>
+                  </Collapsible>
+                )
+              })}
+            </div>
+
             {users.length === 0 && (
               <p className="p-6 text-sm text-slate-500">No users yet.</p>
             )}
@@ -369,7 +448,7 @@ export default function UserAccountsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     First Name
@@ -494,7 +573,7 @@ export default function UserAccountsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     First Name

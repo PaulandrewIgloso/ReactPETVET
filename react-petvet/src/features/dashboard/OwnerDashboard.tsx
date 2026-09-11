@@ -94,13 +94,13 @@ export default function OwnerDashboard() {
   ]
 
   if (isLoading) {
-    return <AppShell><div className="p-8 text-sm text-slate-500">Loading your dashboard...</div></AppShell>
+    return <AppShell><div className="p-4 text-sm text-slate-500 sm:p-6 lg:p-8">Loading your dashboard...</div></AppShell>
   }
 
   if (loadError) {
     return (
       <AppShell>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError}</div>
         </div>
       </AppShell>
@@ -109,13 +109,13 @@ export default function OwnerDashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6 p-8">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8">
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-6 sm:p-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             Welcome back
           </span>
-          <h2 className="mt-4 text-3xl font-bold text-white">Hi there!</h2>
+          <h2 className="mt-4 text-2xl font-bold text-white sm:text-3xl">Hi there!</h2>
           <p className="mt-2 text-slate-300">
             You have <span className="font-semibold text-white">{upcomingAppointments.length} upcoming appointment{upcomingAppointments.length === 1 ? "" : "s"}</span>{" "}
             and <span className="font-semibold text-white">{vaccinesDueSoon.length} vaccine{vaccinesDueSoon.length === 1 ? "" : "s"} due soon</span>.

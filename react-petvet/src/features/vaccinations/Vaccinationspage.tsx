@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X } from "lucide-react"
 import { PetAvatar } from "@/components/shared/PetAvatar"
+import { Collapsible } from "@/components/ui/collapsible"
 import { vaccinationsService } from "@/services/vaccinations/vaccinations.service"
 import type { VaccinationReadDto, VaccinationCreateDto } from "@/services/vaccinations/vaccinations.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -130,7 +131,7 @@ export default function VaccinationsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {isAdmin && (
           <div className="flex justify-end">
             <button
@@ -153,7 +154,8 @@ export default function VaccinationsPage() {
 
         {!isLoading && !loadError && (
           <div className="overflow-hidden rounded-2xl border bg-white">
-            <table className="w-full text-left text-sm">
+            {/* Desktop / tablet table */}
+            <table className="hidden w-full text-left text-sm md:table">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-6 py-3 font-medium">Pet</th>
@@ -204,6 +206,57 @@ export default function VaccinationsPage() {
                 })}
               </tbody>
             </table>
+
+            {/* Mobile: accordion cards */}
+            <div className="divide-y md:hidden">
+              {vaccinations.map((v) => {
+                const status = getStatus(v.nextDueDate)
+                return (
+                  <Collapsible
+                    key={v.vaccinationID}
+                    className="px-4 py-3"
+                    summaryClassName="py-1"
+                    contentClassName="space-y-1.5 pb-2 pt-3 text-sm text-slate-600"
+                    summary={
+                      <div className="flex min-w-0 items-center gap-3">
+                        <PetAvatar
+                          petID={v.petID}
+                          hasPhoto={hasPhotoByPetId.get(v.petID) ?? false}
+                          colorClassName={colorForId(v.petID)}
+                          className="h-9 w-9 shrink-0 rounded-full object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold text-slate-900">{v.petName ?? "—"}</div>
+                          <div className="truncate text-xs text-teal-600">{v.vaccineType}</div>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-md border px-2 py-1 text-xs font-medium ${status.className}`}
+                        >
+                          {status.label}
+                        </span>
+                      </div>
+                    }
+                  >
+                    <div>
+                      <span className="font-semibold text-slate-800">Date Given: </span>
+                      <span className="font-mono text-xs">{v.vaccinationDate}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Batch No.: </span>
+                      <span className="font-mono text-xs">{v.batchNumber ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Next Due: </span>
+                      <span className="font-mono text-xs">{v.nextDueDate ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Administered By: </span>
+                      {v.administeredByName ?? "—"}
+                    </div>
+                  </Collapsible>
+                )
+              })}
+            </div>
 
             {vaccinations.length === 0 && (
               <p className="p-6 text-sm text-slate-500">No vaccination records yet.</p>
@@ -261,7 +314,7 @@ export default function VaccinationsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Date Given

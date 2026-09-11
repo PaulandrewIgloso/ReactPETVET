@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, Eye, X } from "lucide-react"
 import { PetAvatar } from "@/components/shared/PetAvatar"
+import { Collapsible } from "@/components/ui/collapsible"
 import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
 import type { MedicalRecordReadDto, MedicalRecordCreateDto } from "@/services/medicalRecords/medicalRecords.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -128,7 +129,7 @@ export default function MedicalRecordsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {isAdmin && (
           <div className="flex justify-end">
             <button
@@ -151,7 +152,7 @@ export default function MedicalRecordsPage() {
 
         {!isLoading && !loadError && (
           <div className="overflow-hidden rounded-2xl border bg-white">
-            <table className="w-full text-left text-sm">
+            <table className="hidden w-full text-left text-sm md:table">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-6 py-3 font-medium">Date</th>
@@ -219,6 +220,59 @@ export default function MedicalRecordsPage() {
                 })}
               </tbody>
             </table>
+
+            {/* Mobile: accordion cards */}
+            <div className="divide-y md:hidden">
+              {records.map((r) => {
+                const rx = prescriptionList(r.prescriptions)
+                return (
+                  <Collapsible
+                    key={r.recordID}
+                    className="px-4 py-3"
+                    summaryClassName="py-1"
+                    contentClassName="space-y-1.5 pb-2 pt-3 text-sm text-slate-600"
+                    summary={
+                      <div className="flex min-w-0 items-center gap-3">
+                        <PetAvatar
+                          petID={r.petID}
+                          hasPhoto={hasPhotoByPetId.get(r.petID) ?? false}
+                          colorClassName={colorForId(r.petID)}
+                          className="h-9 w-9 shrink-0 rounded-full object-cover"
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-900">
+                            {r.petName ?? "—"}{" "}
+                            <span className="font-mono text-xs font-normal text-slate-400">
+                              {r.visitDate.slice(0, 10)}
+                            </span>
+                          </div>
+                          <div className="truncate text-xs text-teal-600">
+                            {r.diagnosis ?? "—"} · {rx.length === 0 ? "0 rx" : `${rx.length} rx`}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  >
+                    {r.treatment && (
+                      <div>
+                        <span className="font-semibold text-slate-800">Treatment: </span>
+                        {r.treatment}
+                      </div>
+                    )}
+                    {r.notes && (
+                      <div>
+                        <span className="font-semibold text-slate-800">Notes: </span>
+                        {r.notes}
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-semibold text-slate-800">Prescriptions: </span>
+                      {rx.length ? rx.join(", ") : "None"}
+                    </div>
+                  </Collapsible>
+                )
+              })}
+            </div>
 
             {records.length === 0 && (
               <p className="p-6 text-sm text-slate-500">No records yet.</p>

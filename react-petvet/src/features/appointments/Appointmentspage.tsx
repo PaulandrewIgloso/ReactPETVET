@@ -265,15 +265,15 @@ export default function AppointmentsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {/* Tabs + Book button */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-2 overflow-x-auto rounded-lg border border-slate-200 bg-white p-1">
             {(["Scheduled", "Completed", "Cancelled", "NoShow"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+                className={`shrink-0 rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
                   activeTab === tab
                     ? "bg-gradient-to-r from-teal-700 to-teal-600 text-white shadow-sm"
                     : "text-slate-600 hover:bg-slate-50"
@@ -285,7 +285,7 @@ export default function AppointmentsPage() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
             Book Appointment
@@ -308,7 +308,7 @@ export default function AppointmentsPage() {
               return (
                 <div
                   key={a.appointmentID}
-                  className="flex items-center justify-between rounded-2xl border bg-white px-5 py-4 shadow-sm"
+                  className="flex flex-col gap-4 rounded-2xl border bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5"
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-teal-50 py-1.5">
@@ -321,16 +321,16 @@ export default function AppointmentsPage() {
                       colorClassName={colorForId(a.petID)}
                       className="h-10 w-10 shrink-0 rounded-full object-cover"
                     />
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-900">
                         {a.petName ?? "—"} <span className="font-normal text-slate-400">—</span>{" "}
                         <span className="font-normal text-teal-600">{ownerNameByPetId.get(a.petID) ?? "—"}</span>
                       </div>
-                      <div className="text-xs text-slate-500">{a.reason ?? "General visit"}</div>
+                      <div className="truncate text-xs text-slate-500">{a.reason ?? "General visit"}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
+                  <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:gap-4">
+                    <div className="sm:text-right">
                       <div className="text-sm font-semibold text-slate-900">{formatTime(a.appointmentDateTime)}</div>
                       {isAdmin ? (
                         <select
@@ -362,7 +362,7 @@ export default function AppointmentsPage() {
                       {a.status === "NoShow" ? "No-Show" : a.status}
                     </span>
                     {isAdmin && a.status === "Scheduled" && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           onClick={() => handleUpdateStatus(a, "Completed")}
                           disabled={updatingId === a.appointmentID}
@@ -410,7 +410,7 @@ export default function AppointmentsPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
-            <div className="sticky top-0 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
+            <div className="sticky top-0 z-20 flex items-center justify-between bg-gradient-to-r from-slate-900 to-teal-800 px-6 py-4">
               <h2 className="font-semibold text-white">Book Appointment</h2>
               <button onClick={closeModal} className="text-white/80 hover:text-white">
                 <X className="h-5 w-5" />
@@ -478,7 +478,7 @@ export default function AppointmentsPage() {
                       className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
                     />
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <select
                         value={newPetForm.species}
                         onChange={(e) => setNewPetForm({ ...newPetForm, species: e.target.value })}
@@ -497,7 +497,7 @@ export default function AppointmentsPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <input
                         type="date"
                         value={newPetForm.dateOfBirth}
@@ -515,7 +515,7 @@ export default function AppointmentsPage() {
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <input
                         type="text"
                         value={newPetForm.color}
@@ -557,7 +557,7 @@ export default function AppointmentsPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Date

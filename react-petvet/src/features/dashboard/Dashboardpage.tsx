@@ -151,7 +151,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <p className="text-sm text-slate-500">Loading dashboard...</p>
         </div>
       </AppShell>
@@ -161,7 +161,7 @@ export default function DashboardPage() {
   if (loadError) {
     return (
       <AppShell>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {loadError}
           </div>
@@ -172,14 +172,13 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 p-8">
-        {/* Welcome banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8">
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-6 sm:p-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             {todayLabel}
           </span>
-          <h2 className="mt-4 flex items-center gap-2 text-3xl font-bold text-white">
+          <h2 className="mt-4 flex items-center gap-2 text-2xl font-bold text-white sm:text-3xl">
             {getGreeting()}
           </h2>
           <p className="mt-2 text-slate-300">
@@ -310,7 +309,9 @@ export default function DashboardPage() {
             </div>
             <span className="text-xs text-slate-500">{recentPatients.length} shown</span>
           </div>
-          <table className="w-full text-left text-sm">
+
+          {/* Desktop / tablet table */}
+          <table className="hidden w-full text-left text-sm md:table">
             <thead>
               <tr className="border-b text-xs uppercase tracking-wide text-slate-400">
                 <th className="px-5 py-3 font-medium">Pet</th>
@@ -353,6 +354,33 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
+
+          {/* Mobile: stacked cards */}
+          <div className="divide-y md:hidden">
+            {recentPatients.map((p) => (
+              <div key={p.petID} className="flex items-center gap-3 px-5 py-3">
+                <PetAvatar
+                  petID={p.petID}
+                  hasPhoto={!!p.photoPath}
+                  colorClassName={colorForId(p.petID)}
+                  className="h-9 w-9 shrink-0 rounded-full object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold text-slate-900">{p.name}</div>
+                  <div className="truncate text-xs text-slate-500">
+                    {p.breed || p.species}
+                    {p.ownerName ? ` · ${p.ownerName}` : ""}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right text-xs text-slate-500">
+                  {lastVisitByPetId.get(p.petID)?.slice(0, 10) ?? "No visits"}
+                </div>
+              </div>
+            ))}
+            {recentPatients.length === 0 && (
+              <p className="px-5 py-6 text-sm text-slate-500">No pets yet.</p>
+            )}
+          </div>
         </div>
       </div>
     </AppShell>

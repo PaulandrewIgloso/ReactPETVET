@@ -121,7 +121,7 @@ export default function DocumentsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {isAdmin && (
           <div className="flex justify-end">
             <button
@@ -179,7 +179,7 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      {/* Upload Document Modal */}
+      {/* Upload Document */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">

@@ -90,6 +90,7 @@ src/components/shared/PetAvatar.tsx
 src/components/ui/alert.tsx
 src/components/ui/button.tsx
 src/components/ui/card.tsx
+src/components/ui/collapsible.tsx
 src/components/ui/input.tsx
 src/components/ui/label.tsx
 src/features/appointments/Appointmentspage.tsx
@@ -1116,7 +1117,9 @@ export default App
 </file>
 
 <file path="src/components/layout/Appshell.tsx">
-import type { ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
+import { useLocation } from "react-router-dom"
+import { Menu, PawPrint } from "lucide-react"
 import { Sidebar } from "./Sidebar"
 
 interface AppShellProps {
@@ -1124,10 +1127,38 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setIsSidebarOpen(false)
+  }, [location.pathname])
+
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">{children}</div>
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        
+        {/* Mobile top bar */}
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open menu"
+            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-green-500">
+              <PawPrint className="h-4 w-4 text-white" strokeWidth={2.5} />
+            </div>
+            <span className="text-sm font-bold text-slate-900">PetVet MR</span>
+          </div>
+        </header>
+
+        <div className="min-w-0 flex-1 overflow-y-auto">{children}</div>
+      </div>
     </div>
   )
 }
@@ -1428,7 +1459,7 @@ export function LoginForm() {
 <file path="src/components/layout/Sidebar.tsx">
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/services/auth/auth.service"
-import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut } from "lucide-react"
+import { LayoutDashboard, PawPrint, FileText, Syringe, FileStack, Calendar, Users, LogOut, X } from "lucide-react"
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -1451,7 +1482,12 @@ function getInitials(name: string) {
   return name.slice(0, 2).toUpperCase()
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const location = useLocation()
   const { logout, user, isAdmin } = useAuth()
 
@@ -1460,57 +1496,80 @@ export function Sidebar() {
   const visibleNavItems = navItems.filter((item) => isAdmin || !adminOnlyPaths.has(item.href))
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 flex-col bg-slate-950 text-slate-300">
-      <div className="flex items-center gap-2 border-b border-white/10 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-green-500">
-          <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
-        </div>
-        <div className="leading-tight">
-          <div className="text-sm font-bold text-white">PetVet MR</div>
-          <div className="text-xs text-teal-400">Clinic Portal</div>
-        </div>
-      </div>
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {visibleNavItems.map((item) => {
-          const isActive = item.href === location.pathname
-          const Icon = item.icon
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-sm"
-                  : "text-slate-300 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
-          )
-        })}
-      </nav>
-
-      <div className="border-t border-white/10 p-4">
-        <div className="mb-2 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
-            {getInitials(displayName)}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-72 max-w-[85vw] flex-col bg-slate-950 text-slate-300 transition-transform duration-200 ease-out sm:w-64
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:sticky lg:top-0 lg:z-0 lg:w-64 lg:translate-x-0`}
+      >
+        <div className="flex items-center gap-2 border-b border-white/10 px-5 py-5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-green-500">
+            <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
           </div>
-          <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-semibold text-white">{displayName}</div>
-            <div className="flex items-center gap-1 text-xs text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              {roleLabel}
+          <div className="min-w-0 flex-1 leading-tight">
+            <div className="truncate text-sm font-bold text-white">PetVet MR</div>
+            <div className="truncate text-xs text-teal-400">Clinic Portal</div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white lg:hidden"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+          {visibleNavItems.map((item) => {
+            const isActive = item.href === location.pathname
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={onClose}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-sm"
+                    : "text-slate-300 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="border-t border-white/10 p-4">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
+              {getInitials(displayName)}
+            </div>
+            <div className="min-w-0 leading-tight">
+              <div className="truncate text-sm font-semibold text-white">{displayName}</div>
+              <div className="flex items-center gap-1 text-xs text-emerald-400">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+                <span className="truncate">{roleLabel}</span>
+              </div>
             </div>
           </div>
+          <button onClick={logout} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
         </div>
-        <button onClick={logout} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
-          <LogOut className="h-4 w-4" />
-          Sign out
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 </file>
@@ -1851,6 +1910,73 @@ export {
 }
 </file>
 
+<file path="src/components/ui/collapsible.tsx">
+import { useId, useState, type ReactNode } from "react"
+import { ChevronDown } from "lucide-react"
+
+interface CollapsibleProps {
+  summary: ReactNode
+  children: ReactNode
+  defaultOpen?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  className?: string
+  summaryClassName?: string
+  contentClassName?: string
+}
+
+
+export function Collapsible({
+  summary,
+  children,
+  defaultOpen = false,
+  open: openProp,
+  onOpenChange,
+  className = "",
+  summaryClassName = "",
+  contentClassName = "",
+}: CollapsibleProps) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : internalOpen
+  const contentId = useId()
+
+  const toggle = () => {
+    const next = !open
+    if (!isControlled) setInternalOpen(next)
+    onOpenChange?.(next)
+  }
+
+  return (
+    <div className={className}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        aria-controls={contentId}
+        className={`flex w-full items-center justify-between gap-3 text-left ${summaryClassName}`}
+      >
+        {summary}
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      <div
+        id={contentId}
+        className="grid transition-[grid-template-rows] duration-200 ease-out"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
+          <div className={contentClassName}>{children}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="src/components/ui/input.tsx">
 import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
@@ -1903,7 +2029,7 @@ import { PetAvatar } from "@/components/shared/PetAvatar"
 import { appointmentsService } from "@/services/appointments/appointments.service"
 import type { AppointmentReadDto, AppointmentCreateDto, AppointmentUpdateDto } from "@/services/appointments/appointments.dtos"
 import { petsService } from "@/services/pets/pets.service"
-import type { PetReadDto } from "@/services/pets/pets.dtos"
+import type { PetReadDto, PetCreateDto } from "@/services/pets/pets.dtos"
 import { usersService } from "@/services/users/users.service"
 import type { UserReadDto } from "@/services/users/users.dtos"
 import { useAuth } from "@/services/auth/auth.service"
@@ -1939,6 +2065,23 @@ const emptyForm = {
   veterinarianUserID: "",
 }
 
+const SPECIES_OPTIONS = ["Dog", "Cat", "Bird", "Rabbit", "Reptile", "Other"]
+const GENDER_OPTIONS = [
+  { value: "M", label: "Male" },
+  { value: "F", label: "Female" },
+]
+
+const emptyNewPetForm = {
+  name: "",
+  species: "Dog",
+  breed: "",
+  dateOfBirth: "",
+  gender: "M",
+  color: "",
+  microchipID: "",
+  ownerUserID: "",
+}
+
 export default function AppointmentsPage() {
   const { isAdmin } = useAuth()
 
@@ -1955,22 +2098,37 @@ export default function AppointmentsPage() {
   const [saveError, setSaveError] = useState("")
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
+  const [petMode, setPetMode] = useState<"existing" | "new">("existing")
+  const [newPetForm, setNewPetForm] = useState(emptyNewPetForm)
+  const [newPetPhoto, setNewPetPhoto] = useState<File | null>(null)
+
   useEffect(() => {
     let cancelled = false
     async function load() {
       setIsLoading(true)
       setLoadError("")
       try {
-        const [appointmentsData, petsData, usersData] = await Promise.all([
+        // Users/GetAll is Admin-only on the backend, so non-admins would
+        // always get a 403 here. Only request it when it can succeed —
+        // non-admins never see the veterinarian picker anyway (it only
+        // appears in the admin-only Book Appointment modal below).
+        const [appointmentsResult, petsResult, usersResult] = await Promise.allSettled([
           appointmentsService.getAll(),
           petsService.getAll(),
-          usersService.getAll(),
+          isAdmin ? usersService.getAll() : Promise.resolve<UserReadDto[]>([]),
         ])
-        if (!cancelled) {
-          setAppointments(appointmentsData)
-          setPets(petsData)
-          setUsers(usersData)
-        }
+
+        if (cancelled) return
+
+        // Appointments and pets are required for the page to render at all.
+        if (appointmentsResult.status === "rejected") throw appointmentsResult.reason
+        if (petsResult.status === "rejected") throw petsResult.reason
+
+        setAppointments(appointmentsResult.value)
+        setPets(petsResult.value)
+        // Users list is auxiliary (only used for the vet picker) — fall
+        // back to an empty list instead of blocking the whole page.
+        setUsers(usersResult.status === "fulfilled" ? usersResult.value : [])
       } catch (err) {
         if (!cancelled) {
           const message =
@@ -1987,7 +2145,7 @@ export default function AppointmentsPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isAdmin])
 
   const ownerNameByPetId = useMemo(() => {
     const map = new Map<number, string>()
@@ -2006,6 +2164,11 @@ export default function AppointmentsPage() {
     [users]
   )
 
+  const ownerOptions = useMemo(
+    () => users.filter((u) => u.roleName === "PetOwner"),
+    [users]
+  )
+
   const visibleAppointments = appointments
     .filter((a) => a.status === activeTab)
     .sort((a, b) => a.appointmentDateTime.localeCompare(b.appointmentDateTime))
@@ -2014,17 +2177,42 @@ export default function AppointmentsPage() {
     setIsModalOpen(false)
     setForm(emptyForm)
     setSaveError("")
+    setPetMode("existing")
+    setNewPetForm(emptyNewPetForm)
+    setNewPetPhoto(null)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.petID || !form.date || !form.time) return
+    if (!form.date || !form.time) return
+    if (petMode === "existing" && !form.petID) return
+    if (petMode === "new" && !newPetForm.name.trim()) return
 
     setIsSaving(true)
     setSaveError("")
     try {
+      let petID: number
+
+      if (petMode === "new") {
+        const petPayload: PetCreateDto = {
+          name: newPetForm.name.trim(),
+          species: newPetForm.species,
+          breed: newPetForm.breed.trim() || undefined,
+          dateOfBirth: newPetForm.dateOfBirth || undefined,
+          gender: newPetForm.gender || undefined,
+          color: newPetForm.color.trim() || undefined,
+          microchipID: newPetForm.microchipID.trim() || undefined,
+          ownerUserID: isAdmin && newPetForm.ownerUserID ? Number(newPetForm.ownerUserID) : undefined,
+        }
+        const createdPet = await petsService.create(petPayload, newPetPhoto)
+        setPets((prev) => [...prev, createdPet])
+        petID = createdPet.petID
+      } else {
+        petID = Number(form.petID)
+      }
+
       const payload: AppointmentCreateDto = {
-        petID: Number(form.petID),
+        petID,
         appointmentDateTime: `${form.date}T${form.time}:00`,
         reason: form.reason.trim() || undefined,
         veterinarianUserID: form.veterinarianUserID ? Number(form.veterinarianUserID) : null,
@@ -2037,6 +2225,8 @@ export default function AppointmentsPage() {
       const message =
         typeof err === "object" && err && "message" in err
           ? String((err as { message: unknown }).message)
+          : petMode === "new"
+          ? "Could not add pet."
           : "Could not book appointment."
       setSaveError(message)
     } finally {
@@ -2072,17 +2262,42 @@ export default function AppointmentsPage() {
     }
   }
 
+  const handleAssignVet = async (a: AppointmentReadDto, vetId: string) => {
+    setUpdatingId(a.appointmentID)
+    try {
+      const payload: AppointmentUpdateDto = {
+        appointmentDateTime: a.appointmentDateTime,
+        reason: a.reason ?? undefined,
+        status: a.status,
+        veterinarianUserID: vetId ? Number(vetId) : null,
+        notes: a.notes ?? undefined,
+      }
+      const updated = await appointmentsService.update(a.appointmentID, payload)
+      setAppointments((prev) =>
+        prev.map((item) => (item.appointmentID === updated.appointmentID ? updated : item))
+      )
+    } catch (err) {
+      const message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Could not assign veterinarian."
+      alert(message)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {/* Tabs + Book button */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-2 overflow-x-auto rounded-lg border border-slate-200 bg-white p-1">
             {(["Scheduled", "Completed", "Cancelled", "NoShow"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+                className={`shrink-0 rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
                   activeTab === tab
                     ? "bg-gradient-to-r from-teal-700 to-teal-600 text-white shadow-sm"
                     : "text-slate-600 hover:bg-slate-50"
@@ -2092,15 +2307,13 @@ export default function AppointmentsPage() {
               </button>
             ))}
           </div>
-          {isAdmin && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" />
-              Book Appointment
-            </button>
-          )}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Book Appointment
+          </button>
         </div>
 
         {isLoading && <p className="text-sm text-slate-500">Loading appointments...</p>}
@@ -2119,7 +2332,7 @@ export default function AppointmentsPage() {
               return (
                 <div
                   key={a.appointmentID}
-                  className="flex items-center justify-between rounded-2xl border bg-white px-5 py-4 shadow-sm"
+                  className="flex flex-col gap-4 rounded-2xl border bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5"
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-teal-50 py-1.5">
@@ -2132,18 +2345,32 @@ export default function AppointmentsPage() {
                       colorClassName={colorForId(a.petID)}
                       className="h-10 w-10 shrink-0 rounded-full object-cover"
                     />
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-900">
                         {a.petName ?? "—"} <span className="font-normal text-slate-400">—</span>{" "}
                         <span className="font-normal text-teal-600">{ownerNameByPetId.get(a.petID) ?? "—"}</span>
                       </div>
-                      <div className="text-xs text-slate-500">{a.reason ?? "General visit"}</div>
+                      <div className="truncate text-xs text-slate-500">{a.reason ?? "General visit"}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
+                  <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:gap-4">
+                    <div className="sm:text-right">
                       <div className="text-sm font-semibold text-slate-900">{formatTime(a.appointmentDateTime)}</div>
-                      <div className="text-xs text-teal-600">{a.veterinarianName ?? "Unassigned"}</div>
+                      {isAdmin ? (
+                        <select
+                          value={a.veterinarianUserID ?? ""}
+                          onChange={(e) => handleAssignVet(a, e.target.value)}
+                          disabled={updatingId === a.appointmentID}
+                          className="mt-0.5 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-medium text-teal-700 outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-60"
+                        >
+                          <option value="">Unassigned</option>
+                          {veterinarianOptions.map((u) => (
+                            <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="text-xs text-teal-600">{a.veterinarianName ?? "Unassigned"}</div>
+                      )}
                     </div>
                     <span
                       className={`rounded-md border px-3 py-1 text-xs font-medium ${
@@ -2159,7 +2386,7 @@ export default function AppointmentsPage() {
                       {a.status === "NoShow" ? "No-Show" : a.status}
                     </span>
                     {isAdmin && a.status === "Scheduled" && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           onClick={() => handleUpdateStatus(a, "Completed")}
                           disabled={updatingId === a.appointmentID}
@@ -2221,24 +2448,140 @@ export default function AppointmentsPage() {
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Pet
                 </label>
-                <select
-                  required
-                  value={form.petID}
-                  onChange={(e) => setForm({ ...form, petID: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  <option value="">— Select pet —</option>
-                  {pets.map((p) => (
-                    <option key={p.petID} value={p.petID}>{p.name}</option>
-                  ))}
-                </select>
+
+                {/* Sliding toggle between "Select Existing" and "Add New Pet" */}
+                <div className="relative grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-100 p-1">
+                  <span
+                    className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-md bg-white shadow-sm transition-transform duration-200 ease-out"
+                    style={{ transform: petMode === "new" ? "translateX(100%)" : "translateX(0)" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPetMode("existing")}
+                    className={`relative z-10 rounded-md py-1.5 text-xs font-semibold transition-colors ${
+                      petMode === "existing" ? "text-teal-700" : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    Select Existing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPetMode("new")}
+                    className={`relative z-10 rounded-md py-1.5 text-xs font-semibold transition-colors ${
+                      petMode === "new" ? "text-teal-700" : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    Add New Pet
+                  </button>
+                </div>
+
+                {petMode === "existing" ? (
+                  <select
+                    required
+                    value={form.petID}
+                    onChange={(e) => setForm({ ...form, petID: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Select pet —</option>
+                    {pets.map((p) => (
+                      <option key={p.petID} value={p.petID}>{p.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+                    <input
+                      type="text"
+                      required
+                      value={newPetForm.name}
+                      onChange={(e) => setNewPetForm({ ...newPetForm, name: e.target.value })}
+                      placeholder="Pet name"
+                      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                    />
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <select
+                        value={newPetForm.species}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, species: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      >
+                        {SPECIES_OPTIONS.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={newPetForm.breed}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, breed: e.target.value })}
+                        placeholder="Breed"
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <input
+                        type="date"
+                        value={newPetForm.dateOfBirth}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, dateOfBirth: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                      <select
+                        value={newPetForm.gender}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, gender: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      >
+                        {GENDER_OPTIONS.map((g) => (
+                          <option key={g.value} value={g.value}>{g.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <input
+                        type="text"
+                        value={newPetForm.color}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, color: e.target.value })}
+                        placeholder="Color"
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                      <input
+                        type="text"
+                        value={newPetForm.microchipID}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, microchipID: e.target.value })}
+                        placeholder="Microchip ID (optional)"
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      />
+                    </div>
+
+                    {isAdmin && (
+                      <select
+                        value={newPetForm.ownerUserID}
+                        onChange={(e) => setNewPetForm({ ...newPetForm, ownerUserID: e.target.value })}
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                      >
+                        <option value="">— Select owner —</option>
+                        {ownerOptions.map((u) => (
+                          <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
+                        ))}
+                      </select>
+                    )}
+
+                    <div className="flex items-center gap-2 text-sm">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewPetPhoto(e.target.files?.[0] ?? null)}
+                        className="text-xs text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Date
@@ -2278,21 +2621,23 @@ export default function AppointmentsPage() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Veterinarian
-                </label>
-                <select
-                  value={form.veterinarianUserID}
-                  onChange={(e) => setForm({ ...form, veterinarianUserID: e.target.value })}
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
-                >
-                  <option value="">— Unassigned —</option>
-                  {veterinarianOptions.map((u) => (
-                    <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
-                  ))}
-                </select>
-              </div>
+              {isAdmin && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Veterinarian
+                  </label>
+                  <select
+                    value={form.veterinarianUserID}
+                    onChange={(e) => setForm({ ...form, veterinarianUserID: e.target.value })}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-teal-500/40"
+                  >
+                    <option value="">— Unassigned —</option>
+                    {veterinarianOptions.map((u) => (
+                      <option key={u.userID} value={u.userID}>{userDisplayName(u)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button
@@ -2473,7 +2818,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <p className="text-sm text-slate-500">Loading dashboard...</p>
         </div>
       </AppShell>
@@ -2483,7 +2828,7 @@ export default function DashboardPage() {
   if (loadError) {
     return (
       <AppShell>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {loadError}
           </div>
@@ -2494,14 +2839,13 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 p-8">
-        {/* Welcome banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8">
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-6 sm:p-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             {todayLabel}
           </span>
-          <h2 className="mt-4 flex items-center gap-2 text-3xl font-bold text-white">
+          <h2 className="mt-4 flex items-center gap-2 text-2xl font-bold text-white sm:text-3xl">
             {getGreeting()}
           </h2>
           <p className="mt-2 text-slate-300">
@@ -2632,7 +2976,9 @@ export default function DashboardPage() {
             </div>
             <span className="text-xs text-slate-500">{recentPatients.length} shown</span>
           </div>
-          <table className="w-full text-left text-sm">
+
+          {/* Desktop / tablet table */}
+          <table className="hidden w-full text-left text-sm md:table">
             <thead>
               <tr className="border-b text-xs uppercase tracking-wide text-slate-400">
                 <th className="px-5 py-3 font-medium">Pet</th>
@@ -2675,6 +3021,33 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
+
+          {/* Mobile: stacked cards */}
+          <div className="divide-y md:hidden">
+            {recentPatients.map((p) => (
+              <div key={p.petID} className="flex items-center gap-3 px-5 py-3">
+                <PetAvatar
+                  petID={p.petID}
+                  hasPhoto={!!p.photoPath}
+                  colorClassName={colorForId(p.petID)}
+                  className="h-9 w-9 shrink-0 rounded-full object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold text-slate-900">{p.name}</div>
+                  <div className="truncate text-xs text-slate-500">
+                    {p.breed || p.species}
+                    {p.ownerName ? ` · ${p.ownerName}` : ""}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right text-xs text-slate-500">
+                  {lastVisitByPetId.get(p.petID)?.slice(0, 10) ?? "No visits"}
+                </div>
+              </div>
+            ))}
+            {recentPatients.length === 0 && (
+              <p className="px-5 py-6 text-sm text-slate-500">No pets yet.</p>
+            )}
+          </div>
         </div>
       </div>
     </AppShell>
@@ -2779,13 +3152,13 @@ export default function OwnerDashboard() {
   ]
 
   if (isLoading) {
-    return <AppShell><div className="p-8 text-sm text-slate-500">Loading your dashboard...</div></AppShell>
+    return <AppShell><div className="p-4 text-sm text-slate-500 sm:p-6 lg:p-8">Loading your dashboard...</div></AppShell>
   }
 
   if (loadError) {
     return (
       <AppShell>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError}</div>
         </div>
       </AppShell>
@@ -2794,13 +3167,13 @@ export default function OwnerDashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6 p-8">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-8">
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 p-6 sm:p-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             Welcome back
           </span>
-          <h2 className="mt-4 text-3xl font-bold text-white">Hi there!</h2>
+          <h2 className="mt-4 text-2xl font-bold text-white sm:text-3xl">Hi there!</h2>
           <p className="mt-2 text-slate-300">
             You have <span className="font-semibold text-white">{upcomingAppointments.length} upcoming appointment{upcomingAppointments.length === 1 ? "" : "s"}</span>{" "}
             and <span className="font-semibold text-white">{vaccinesDueSoon.length} vaccine{vaccinesDueSoon.length === 1 ? "" : "s"} due soon</span>.
@@ -3027,7 +3400,7 @@ export default function DocumentsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {isAdmin && (
           <div className="flex justify-end">
             <button
@@ -3085,7 +3458,7 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      {/* Upload Document Modal */}
+      {/* Upload Document */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl scrollbar-hide">
@@ -3196,7 +3569,6 @@ import type { UserReadDto } from "@/services/users/users.dtos"
 import { useAuth } from "@/services/auth/auth.service"
 import { PetAvatar } from "@/components/shared/PetAvatar"
 
-// ---- Local display helpers (unchanged) ----
 const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
 
 function colorForId(id: number) {
@@ -3264,7 +3636,6 @@ export default function PetProfilesPage() {
         const petsData = await petsService.getAll()
         if (!cancelled) setPets(petsData)
 
-        // Owner list is only needed for Admin's "Owner" picker; PetOwner may not have access to it.
         try {
           const usersData = await usersService.getAll()
           if (!cancelled) setUsers(usersData)
@@ -3334,10 +3705,11 @@ export default function PetProfilesPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 p-8">
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+
         {/* Search + Add */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative max-w-md flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -3349,7 +3721,7 @@ export default function PetProfilesPage() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
             Add Pet
@@ -3452,7 +3824,7 @@ export default function PetProfilesPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Species
@@ -3481,7 +3853,7 @@ export default function PetProfilesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Date of Birth
@@ -3509,7 +3881,7 @@ export default function PetProfilesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Color
@@ -3596,10 +3968,11 @@ export default function PetProfilesPage() {
 </file>
 
 <file path="src/features/records/MedicalRecordspage.tsx">
-import { useEffect, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, Eye, X } from "lucide-react"
 import { PetAvatar } from "@/components/shared/PetAvatar"
+import { Collapsible } from "@/components/ui/collapsible"
 import { medicalRecordsService } from "@/services/medicalRecords/medicalRecords.service"
 import type { MedicalRecordReadDto, MedicalRecordCreateDto } from "@/services/medicalRecords/medicalRecords.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -3726,7 +4099,7 @@ export default function MedicalRecordsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {isAdmin && (
           <div className="flex justify-end">
             <button
@@ -3749,7 +4122,7 @@ export default function MedicalRecordsPage() {
 
         {!isLoading && !loadError && (
           <div className="overflow-hidden rounded-2xl border bg-white">
-            <table className="w-full text-left text-sm">
+            <table className="hidden w-full text-left text-sm md:table">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-6 py-3 font-medium">Date</th>
@@ -3763,8 +4136,8 @@ export default function MedicalRecordsPage() {
                 {records.map((r) => {
                   const rx = prescriptionList(r.prescriptions)
                   return (
-                    <>
-                      <tr key={r.recordID} className="align-top">
+                    <Fragment key={r.recordID}>
+                      <tr className="align-top">
                         <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">
                           {r.visitDate.slice(0, 10)}
                         </td>
@@ -3812,11 +4185,64 @@ export default function MedicalRecordsPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   )
                 })}
               </tbody>
             </table>
+
+            {/* Mobile: accordion cards */}
+            <div className="divide-y md:hidden">
+              {records.map((r) => {
+                const rx = prescriptionList(r.prescriptions)
+                return (
+                  <Collapsible
+                    key={r.recordID}
+                    className="px-4 py-3"
+                    summaryClassName="py-1"
+                    contentClassName="space-y-1.5 pb-2 pt-3 text-sm text-slate-600"
+                    summary={
+                      <div className="flex min-w-0 items-center gap-3">
+                        <PetAvatar
+                          petID={r.petID}
+                          hasPhoto={hasPhotoByPetId.get(r.petID) ?? false}
+                          colorClassName={colorForId(r.petID)}
+                          className="h-9 w-9 shrink-0 rounded-full object-cover"
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-900">
+                            {r.petName ?? "—"}{" "}
+                            <span className="font-mono text-xs font-normal text-slate-400">
+                              {r.visitDate.slice(0, 10)}
+                            </span>
+                          </div>
+                          <div className="truncate text-xs text-teal-600">
+                            {r.diagnosis ?? "—"} · {rx.length === 0 ? "0 rx" : `${rx.length} rx`}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  >
+                    {r.treatment && (
+                      <div>
+                        <span className="font-semibold text-slate-800">Treatment: </span>
+                        {r.treatment}
+                      </div>
+                    )}
+                    {r.notes && (
+                      <div>
+                        <span className="font-semibold text-slate-800">Notes: </span>
+                        {r.notes}
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-semibold text-slate-800">Prescriptions: </span>
+                      {rx.length ? rx.join(", ") : "None"}
+                    </div>
+                  </Collapsible>
+                )
+              })}
+            </div>
 
             {records.length === 0 && (
               <p className="p-6 text-sm text-slate-500">No records yet.</p>
@@ -3990,6 +4416,7 @@ export default function MedicalRecordsPage() {
 import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X, Pencil, UserX, UserCheck } from "lucide-react"
+import { Collapsible } from "@/components/ui/collapsible"
 import { usersService } from "@/services/users/users.service"
 import type { UserReadDto, UserUpdateDto } from "@/services/users/users.dtos"
 import { rolesService } from "@/services/roles/roles.service"
@@ -4220,7 +4647,7 @@ export default function UserAccountsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         <div className="flex justify-end">
           <button
             onClick={() => setIsModalOpen(true)}
@@ -4241,7 +4668,8 @@ export default function UserAccountsPage() {
 
         {!isLoading && !loadError && (
           <div className="overflow-hidden rounded-2xl border bg-white">
-            <table className="w-full text-left text-sm">
+            {/* Desktop / tablet table */}
+            <table className="hidden w-full text-left text-sm md:table">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-6 py-3 font-medium">User</th>
@@ -4320,6 +4748,83 @@ export default function UserAccountsPage() {
               </tbody>
             </table>
 
+            {/* Mobile: accordion cards */}
+            <div className="divide-y md:hidden">
+              {users.map((u) => {
+                const isSelf = currentUser?.id === u.userID
+                const petCount = petsCountByUserId.get(u.userID) ?? 0
+                return (
+                  <Collapsible
+                    key={u.userID}
+                    className="px-4 py-3"
+                    summaryClassName="py-1"
+                    contentClassName="space-y-2 pb-2 pt-3 text-sm text-slate-600"
+                    summary={
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorForId(u.userID)}`}>
+                          {getInitials(u)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold text-slate-900">
+                            {displayName(u)}
+                            {isSelf && <span className="ml-1 text-xs font-normal text-slate-400">(you)</span>}
+                          </div>
+                          <div className="truncate font-mono text-xs text-slate-500">{u.email}</div>
+                        </div>
+                        <span
+                          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                            u.isActive
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${u.isActive ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          {u.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-800">Role:</span>
+                      <span
+                        className={`rounded-md px-2 py-1 text-xs font-medium ${
+                          u.roleName === "Admin"
+                            ? "bg-sky-100 text-sky-700"
+                            : "bg-emerald-100 text-emerald-700"
+                        }`}
+                      >
+                        {u.roleName ?? "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Pets: </span>
+                      {u.roleName === "PetOwner" ? petCount : "—"}
+                    </div>
+                    <div className="flex items-center gap-4 pt-1">
+                      <button
+                        className="flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-900"
+                        aria-label="Edit user"
+                        onClick={() => openEditModal(u)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </button>
+                      <button
+                        className="flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-700 disabled:opacity-40"
+                        aria-label="Toggle active status"
+                        title={isSelf ? "You can't deactivate your own account" : undefined}
+                        disabled={isSelf || togglingId === u.userID}
+                        onClick={() => toggleStatus(u)}
+                      >
+                        {u.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                        {u.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </div>
+                  </Collapsible>
+                )
+              })}
+            </div>
+
             {users.length === 0 && (
               <p className="p-6 text-sm text-slate-500">No users yet.</p>
             )}
@@ -4358,7 +4863,7 @@ export default function UserAccountsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     First Name
@@ -4483,7 +4988,7 @@ export default function UserAccountsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     First Name
@@ -4589,6 +5094,7 @@ import { useEffect, useMemo, useState } from "react"
 import { AppShell } from "@/components/layout/Appshell"
 import { Plus, X } from "lucide-react"
 import { PetAvatar } from "@/components/shared/PetAvatar"
+import { Collapsible } from "@/components/ui/collapsible"
 import { vaccinationsService } from "@/services/vaccinations/vaccinations.service"
 import type { VaccinationReadDto, VaccinationCreateDto } from "@/services/vaccinations/vaccinations.dtos"
 import { petsService } from "@/services/pets/pets.service"
@@ -4717,7 +5223,7 @@ export default function VaccinationsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4 p-8">
+      <div className="space-y-4 p-4 sm:p-6 lg:p-8">
         {isAdmin && (
           <div className="flex justify-end">
             <button
@@ -4740,7 +5246,8 @@ export default function VaccinationsPage() {
 
         {!isLoading && !loadError && (
           <div className="overflow-hidden rounded-2xl border bg-white">
-            <table className="w-full text-left text-sm">
+            {/* Desktop / tablet table */}
+            <table className="hidden w-full text-left text-sm md:table">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-6 py-3 font-medium">Pet</th>
@@ -4791,6 +5298,57 @@ export default function VaccinationsPage() {
                 })}
               </tbody>
             </table>
+
+            {/* Mobile: accordion cards */}
+            <div className="divide-y md:hidden">
+              {vaccinations.map((v) => {
+                const status = getStatus(v.nextDueDate)
+                return (
+                  <Collapsible
+                    key={v.vaccinationID}
+                    className="px-4 py-3"
+                    summaryClassName="py-1"
+                    contentClassName="space-y-1.5 pb-2 pt-3 text-sm text-slate-600"
+                    summary={
+                      <div className="flex min-w-0 items-center gap-3">
+                        <PetAvatar
+                          petID={v.petID}
+                          hasPhoto={hasPhotoByPetId.get(v.petID) ?? false}
+                          colorClassName={colorForId(v.petID)}
+                          className="h-9 w-9 shrink-0 rounded-full object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold text-slate-900">{v.petName ?? "—"}</div>
+                          <div className="truncate text-xs text-teal-600">{v.vaccineType}</div>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-md border px-2 py-1 text-xs font-medium ${status.className}`}
+                        >
+                          {status.label}
+                        </span>
+                      </div>
+                    }
+                  >
+                    <div>
+                      <span className="font-semibold text-slate-800">Date Given: </span>
+                      <span className="font-mono text-xs">{v.vaccinationDate}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Batch No.: </span>
+                      <span className="font-mono text-xs">{v.batchNumber ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Next Due: </span>
+                      <span className="font-mono text-xs">{v.nextDueDate ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800">Administered By: </span>
+                      {v.administeredByName ?? "—"}
+                    </div>
+                  </Collapsible>
+                )
+              })}
+            </div>
 
             {vaccinations.length === 0 && (
               <p className="p-6 text-sm text-slate-500">No vaccination records yet.</p>
@@ -4848,7 +5406,7 @@ export default function VaccinationsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Date Given
@@ -5088,8 +5646,10 @@ apiClient.interceptors.response.use(
       error.response?.data?.message ??
       error.message ??
       "Something went wrong. Please try again."
+      
+    const isAuthEndpoint = error.config?.url?.includes("/api/Auth/")
 
-    if (status === 401) {
+    if (status === 401 && !isAuthEndpoint) {
       localStorage.removeItem("token")
       window.location.href = "/login"
     }

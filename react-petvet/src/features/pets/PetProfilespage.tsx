@@ -8,7 +8,6 @@ import type { UserReadDto } from "@/services/users/users.dtos"
 import { useAuth } from "@/services/auth/auth.service"
 import { PetAvatar } from "@/components/shared/PetAvatar"
 
-// ---- Local display helpers (unchanged) ----
 const avatarColors = ["bg-orange-200", "bg-slate-300", "bg-amber-300", "bg-yellow-200", "bg-slate-500", "bg-emerald-200", "bg-sky-200"]
 
 function colorForId(id: number) {
@@ -76,7 +75,6 @@ export default function PetProfilesPage() {
         const petsData = await petsService.getAll()
         if (!cancelled) setPets(petsData)
 
-        // Owner list is only needed for Admin's "Owner" picker; PetOwner may not have access to it.
         try {
           const usersData = await usersService.getAll()
           if (!cancelled) setUsers(usersData)
@@ -146,10 +144,11 @@ export default function PetProfilesPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 p-8">
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+
         {/* Search + Add */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative max-w-md flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -161,7 +160,7 @@ export default function PetProfilesPage() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-700 via-teal-600 to-green-500 px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
             Add Pet
@@ -264,7 +263,7 @@ export default function PetProfilesPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Species
@@ -293,7 +292,7 @@ export default function PetProfilesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Date of Birth
@@ -321,7 +320,7 @@ export default function PetProfilesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Color
